@@ -48,3 +48,12 @@
 @media(max-width:600px){.product-info strong{font-size:9px}}
 .cart-total{display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px 0 4px;color:#fff;font-size:12px;font-weight:900;letter-spacing:.7px}
 .cart-total strong{font:22px "Archivo Black",sans-serif;color:var(--yellow)}
+
+.payment-actions{display:flex;flex-direction:column;gap:9px;width:100%;margin-top:8px}
+.pay-card,.pay-cash{width:100%;padding:14px 12px;border:1px solid var(--yellow);background:var(--yellow);color:#050505;font-size:9px;font-weight:900;letter-spacing:1px;cursor:pointer}
+.pay-cash{background:transparent;color:var(--yellow)}
+.pay-card:disabled{opacity:.55;cursor:wait}
+.contact-directory{margin-top:25px}
+.contact-directory h3{font:12px 'Archivo Black',sans-serif;letter-spacing:1px}
+.contact-directory p{margin-bottom:0}
+.contact-directory a{margin-top:4px}
