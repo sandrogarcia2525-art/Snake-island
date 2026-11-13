@@ -215,7 +215,6 @@ form.addEventListener('submit',async event=>{
  try{
   const saveButton=document.querySelector('#save-product');saveButton.disabled=true;
   if(selectedPhoto)product.image=await uploadPhoto(selectedPhoto);
-  else if(previous?.image)product.image=previous.image;
   const index=products.findIndex(item=>item.id===product.id);if(index>=0)products[index]=product;else products.push(product);
   await saveRemote();reset();setStatus('Guardado en el catálogo oficial. Ya está disponible para los visitantes.');
  }catch(error){setStatus(error.message||'No se pudo guardar.')}
@@ -223,7 +222,7 @@ form.addEventListener('submit',async event=>{
 });
 document.querySelector('#cancel-edit')?.addEventListener('click',reset);
 document.querySelector('#export-products')?.addEventListener('click',()=>{const blob=new Blob([JSON.stringify(products,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='snake-island-catalogo.json';a.click();URL.revokeObjectURL(url);setStatus('Respaldo del catálogo descargado.')});
-document.querySelector('#import-products')?.addEventListener('change',async event=>{const file=event.target.files?.[0];if(!file)return;try{const imported=JSON.parse(await file.text());if(!Array.isArray(imported)||imported.length>200||imported.some(p=>!p.name||!Object.hasOwn(labels,p.category)||!Number.isFinite(Number(p.price))))throw new Error('Formato de catálogo no válido.');products=imported.map(p=>({id:safe(p.id)||crypto.randomUUID(),name:safe(p.name),category:p.category,image:safe(p.image),description:safe(p.description),price:Number(p.price),stock:Number(p.stock||0)}));await saveRemote();setStatus('Catálogo importado y publicado.');}catch(e){setStatus(e.message||'No se pudo importar.')}event.target.value=''});
+document.querySelector('#import-products')?.addEventListener('change',async event=>{const file=event.target.files?.[0];if(!file)return;try{const imported=JSON.parse(await file.text());if(!Array.isArray(imported)||imported.length>200||imported.some(p=>!p.name||!Object.hasOwn(labels,p.category)||!Number.isFinite(Number(p.price))))throw new Error('Formato de catálogo no válido.');const restored=[];for(const p of imported){let image=safe(p.image);if(p.photoData&&String(p.photoData).startsWith('data:image/')){const file=new File([await (await fetch(p.photoData)).blob()],'catalog-image',{type:(await (await fetch(p.photoData)).blob()).type||'image/jpeg'});image=await uploadPhoto(file)}restored.push({id:safe(p.id)||crypto.randomUUID(),name:safe(p.name),category:p.category,image,description:safe(p.description),price:Number(p.price),stock:Number(p.stock||0)})}products=restored;await saveRemote();setStatus('Catálogo importado y publicado.');}catch(e){setStatus(e.message||'No se pudo importar.')}event.target.value=''});
 async function getLegacyPhoto(id){
  if(!id)return null;
  return new Promise(resolve=>{try{const req=indexedDB.open(PHOTO_DB,1);req.onsuccess=()=>{const db=req.result;if(!db.objectStoreNames.contains(PHOTO_STORE)){db.close();resolve(null);return}const get=db.transaction(PHOTO_STORE).objectStore(PHOTO_STORE).get(id);get.onsuccess=()=>{const value=get.result||null;db.close();resolve(value)};get.onerror=()=>{db.close();resolve(null)}};req.onerror=()=>resolve(null)}catch{resolve(null)}});
