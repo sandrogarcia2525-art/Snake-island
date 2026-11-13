@@ -12,7 +12,7 @@
 <header class="site-header">
 <a class="brand" href="#home"><span>SNAKE ISLAND</span><small>PRESENTA</small><b>BLUE WORLDS</b></a>
 <button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
-<nav class="main-nav"><a href="#shop">SHOP</a><a href="#story">ABOUT</a><a href="#contact">CONTACTO</a><a href="#admin-catalogo">PANEL LOCAL</a></nav>
+<nav class="main-nav"><a href="#shop">SHOP</a><a href="#story">ABOUT</a><a href="#contact">CONTACTO</a><a href="#admin-catalogo">ADMINISTRACIÓN</a></nav>
 <button class="bag" id="bag-open" type="button" aria-label="Abrir bolsa de compra" aria-haspopup="dialog" aria-controls="cart-dialog">BAG <span id="bag-count">0</span></button>
 </header>
 <main id="home">
@@ -48,7 +48,7 @@
 </section>
 
 <section class="catalog-admin" id="admin-catalogo">
-  <div class="admin-heading"><div><p class="section-kicker">04 / ADMINISTRACIÓN</p><h2>EDITA TU<br><em>CATÁLOGO.</em></h2><p class="admin-intro">Agrega artículos, fotografías desde la galería del teléfono, precios y existencias. Este panel guarda los datos solo en este navegador; no los publica ni sincroniza con otros dispositivos.</p></div><span class="admin-lock">PANEL LOCAL</span></div>
+  <div class="admin-heading"><div><p class="section-kicker">04 / ADMINISTRACIÓN</p><h2>EDITA TU<br><em>CATÁLOGO.</em></h2><p class="admin-intro">Administra artículos, fotografías, precios y existencias del catálogo oficial. Los cambios se sincronizan con la tienda pública.</p></div><span class="admin-lock">PANEL LOCAL</span></div>
   <form id="product-form" class="admin-form">
     <input type="hidden" id="edit-id">
     <label>Nombre del artículo<input id="product-name" required maxlength="70" placeholder="Ej. Hoodie Blue World"></label>
@@ -57,7 +57,7 @@
     <label>O URL de fotografía (opcional)<input id="product-image" type="url" placeholder="https://..."></label>
     <label>Descripción<textarea id="product-description" rows="3" maxlength="240" placeholder="Detalles, color, tallas..."></textarea></label>
     <label>Precio (MXN)<input id="product-price" type="number" min="0" step="1" required placeholder="Por confirmar"></label>
-    <label>Existencias (registro local)<input id="product-stock" type="number" min="0" step="1" required value="0"></label>
+    <label>Existencias<input id="product-stock" type="number" min="0" step="1" required value="0"></label>
     <div class="admin-actions"><button class="admin-save" type="submit" id="save-product">GUARDAR ARTÍCULO ↗</button><button class="admin-cancel" type="button" id="cancel-edit">CANCELAR</button></div>
   </form>
   <div class="admin-toolbar"><button type="button" id="export-products">EXPORTAR CATÁLOGO JSON ↓</button><label class="import-label">IMPORTAR CATÁLOGO JSON ↑<input type="file" id="import-products" accept="application/json,.json"></label></div>
