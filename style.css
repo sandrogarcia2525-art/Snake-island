@@ -96,3 +96,11 @@
 
 .product-price-detail{padding:0 18px;margin:0 0 12px;color:#c6c6c6;font-size:11px;line-height:1.6}
 .bundle-button{margin-top:7px}
+
+/* Ajustes de accesibilidad y disposición del checkout */
+.cart-bottom{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:10px}
+.cart-bottom p{max-width:none;width:100%;margin:0}
+.payment-actions{display:flex;flex-direction:column;gap:9px;width:100%}
+.pay-transfer{width:100%;padding:14px 12px;border:1px solid var(--purple);background:var(--purple);color:#fff;font-size:9px;font-weight:900;letter-spacing:1px;cursor:pointer}
+.pay-transfer:hover{filter:brightness(1.12)}
+.pay-card:disabled{opacity:.55;cursor:not-allowed}
