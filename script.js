@@ -83,7 +83,7 @@ document.querySelector('#pay-cash')?.addEventListener('click',()=>{
   if(cart.some(item=>!Number.isFinite(item.price)&&prices[item.name]===undefined)){alert('El catálogo aún no tiene precios verificados.');return}
   const lines=cart.map(item=>'- '+item.name+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+money(Number.isFinite(item.price)?item.price:prices[item.name]));
   const amount=cart.reduce((sum,item)=>sum+(Number.isFinite(item.price)?item.price:prices[item.name]),0);
-  const message='Hola, quiero realizar este pedido de Snake Island × Blue Worlds con pago en efectivo contra entrega:\n'+lines.join('\n')+'\nTotal: '+money(amount)+'\nConfirmen disponibilidad, envío y forma de entrega, por favor.';
+  const message='Hola, quiero consultar este pedido de Snake Island × Blue Worlds:\n'+lines.join('\n')+'\nTotal de productos: '+money(amount)+'\nConfirmen existencias, tallas, zona y costo de envío, y si es posible pagar en efectivo. Este mensaje es solo una consulta; aún no confirmo el pedido.';
   window.open('https://wa.me/'+orderPhone+'?text='+encodeURIComponent(message),'_blank','noopener');
 });
 
