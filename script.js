@@ -126,6 +126,7 @@ heading?.insertAdjacentElement('afterend',gate);
 const logout=document.createElement('button');
 logout.type='button';logout.className='admin-logout';logout.textContent='CERRAR SESIÓN';
 heading?.append(logout);
+const lockLabel=admin.querySelector('.admin-lock');if(lockLabel)lockLabel.textContent='PANEL PROTEGIDO';
 function setStatus(message){if(statusLine)statusLine.textContent=message}
 async function requestSession(){try{const r=await fetch('/api/admin-session',{cache:'no-store'});const d=await r.json();return !!d.authenticated}catch{return false}}
 async function loadRemote(){
@@ -230,14 +231,15 @@ async function migrateLegacy(){
  if(localStorage.getItem('snake-island-blue-catalog-migrated-v1'))return;
  let legacy=[];try{legacy=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch{}
  if(!Array.isArray(legacy)||!legacy.length){localStorage.setItem('snake-island-blue-catalog-migrated-v1','1');return}
- if(products.length){setStatus('Hay productos locales antiguos y un catálogo público existente. Exporta el catálogo local para revisar la fusión antes de importarlo.');return}
  const migrated=[];
+ const existingIds=new Set(products.map(item=>item.id));
  for(const item of legacy){
   let image=safe(item.image);
   if(item.photoId){const blob=await getLegacyPhoto(item.photoId);if(blob){const file=new File([blob],'legacy-image',{type:blob.type||'image/jpeg'});image=await uploadPhoto(file)}}
-  migrated.push({id:safe(item.id)||crypto.randomUUID(),name:safe(item.name),category:item.category,image,description:safe(item.description),price:Number(item.price),stock:Number(item.stock||0)});
+  const id=safe(item.id)||crypto.randomUUID();if(existingIds.has(id))continue;
+  migrated.push({id,name:safe(item.name),category:item.category,image,description:safe(item.description),price:Number(item.price),stock:Number(item.stock||0)});
  }
- products=migrated;await saveRemote();localStorage.setItem('snake-island-blue-catalog-migrated-v1','1');
+ products=products.concat(migrated);await saveRemote();localStorage.setItem('snake-island-blue-catalog-migrated-v1','1');
  setStatus('Catálogo guardado anteriormente en este teléfono migrado al catálogo público.');
 }
 async function unlock(){
