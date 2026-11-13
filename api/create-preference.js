@@ -1,8 +1,12 @@
 const catalog = {
-  "BLUE WORLD TEE": { price: null, category: "wear" },
-  "WORLD HOODIE": { price: null, category: "wear" },
-  "SMILE CAP": { price: null, category: "accessories" },
-  "BLUE TOTE BAG": { price: null, category: "accessories" }
+  "SUDADERAS 1 PIEZA": { price: 850, units: 1, category: "wear" },
+  "SUDADERAS 10 PIEZAS": { price: 4500, units: 10, category: "wear" },
+  "CAPS 3 PIEZAS": { price: 750, units: 3, category: "accessories" },
+  "CAPS 5 PIEZAS": { price: 1250, units: 5, category: "accessories" },
+  "PLAYERAS 1 PIEZA": { price: 950, units: 1, category: "wear" },
+  "PLAYERAS 3 PIEZAS": { price: 2800, units: 3, category: "wear" },
+  "SUÉTERES 1 PIEZA": { price: 950, units: 1, category: "wear" },
+  "SUÉTERES 3 PIEZAS": { price: 2800, units: 3, category: "wear" }
 };
 const sizes = new Set(["chica", "mediana", "grande"]);
 
@@ -26,14 +30,14 @@ module.exports = async function handler(req, res) {
   for (const item of items) {
     const product = catalog[item && item.name];
     const quantity = Number(item && item.quantity);
-    if (!product || !Number.isFinite(product.price) || product.price <= 0 || !Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
+    if (!product || !Number.isFinite(product.price) || product.price <= 0 || quantity !== 1) {
       return res.status(400).json({ error: "Uno de los artículos no está disponible para pago en línea." });
     }
-    if (product.category === "wear" && !sizes.has(item.size)) {
-      return res.status(400).json({ error: "Selecciona talla chica, mediana o grande." });
+    if (product.category === "wear" && (!Array.isArray(item.sizes) || item.sizes.length !== product.units || item.sizes.some(size => !sizes.has(size)))) {
+      return res.status(400).json({ error: "Indica las tallas requeridas: chica, mediana o grande." });
     }
     preferenceItems.push({
-      title: item.name + (item.size ? " / Talla " + item.size : ""),
+      title: item.name + (item.sizes && item.sizes.length ? " / Tallas " + item.sizes.join(", ") : ""),
       quantity,
       currency_id: "MXN",
       unit_price: product.price
