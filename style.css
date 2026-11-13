@@ -37,3 +37,14 @@
 .bottle b{font:15px/.95 "Archivo Black",sans-serif;color:var(--yellow);text-align:center;z-index:1}
 .bottle i{position:absolute;bottom:27px;right:20px;color:#fff;font-style:normal;font-size:20px;z-index:1}
 @media(max-width:600px){.flower-shirt{transform:scale(.75) rotate(5deg)}.bottle{transform:scale(.78) rotate(-8deg)}.hero h1,.manifesto h2,.shop-head h2,.contact h2{text-shadow:1px 1px 0 #b99c00,2px 2px 0 #806b00,4px 7px 10px #000}}
+
+/* Original BLUE WORLD campaign illustration */
+.blue-world-illustration{display:block;width:min(900px,88vw);height:auto;max-height:350px;margin:0 auto -12px;overflow:visible;filter:drop-shadow(0 24px 25px rgba(135,76,255,.24))}
+.hero-center{width:100%;padding:0 3vw}
+.hero h1{font-size:clamp(76px,11vw,150px);margin:0 0 18px}
+.hero .overline{margin:0 0 12px}
+@media(max-width:600px){.blue-world-illustration{width:112vw;max-width:none;margin-left:-6vw;max-height:260px;margin-bottom:2px}.hero h1{font-size:clamp(66px,16vw,100px);margin:0 0 14px}.hero-center{margin-top:0}}
+.product-info strong{font-size:11px;letter-spacing:.3px}
+@media(max-width:600px){.product-info strong{font-size:9px}}
+.cart-total{display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px 0 4px;color:#fff;font-size:12px;font-weight:900;letter-spacing:.7px}
+.cart-total strong{font:22px "Archivo Black",sans-serif;color:var(--yellow)}
