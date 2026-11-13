@@ -49,7 +49,23 @@
           <div class="product-visual blue-sweater"><span class="garment-mark">BW</span></div><div class="product-info"><div><small>BLUE WORLD / 04</small><h3>SUÉTERES</h3><span class="price">1 pieza: $950 MXN</span><span class="price">3 piezas: $2,800 MXN</span></div><b>↗</b></div></a>
       </div>
     </section>
-    <section class="statement">
+<section class="catalog-admin" id="admin-catalogo">
+      <div class="admin-heading"><div><p class="eyebrow">03 / ADMINISTRACIÓN</p><h2>EDITA TU<br><em>CATÁLOGO.</em></h2><p class="admin-intro">Agrega y administra prendas desde este navegador. Los cambios se guardan localmente y puedes exportarlos para publicarlos después.</p></div><span class="admin-lock">PANEL LOCAL</span></div>
+      <form id="product-form" class="admin-form">
+        <input type="hidden" id="edit-id">
+        <label>Nombre del artículo<input id="product-name" required maxlength="70" placeholder="Ej. Hoodie Blue World"></label>
+        <label>Categoría<select id="product-category" required><option value="hoodies">Sudaderas</option><option value="caps">Caps</option><option value="playeras">Playeras</option><option value="sueteres">Suéteres</option></select></label>
+        <label>Fotografía desde tu teléfono<input id="product-photo" type="file" accept="image/*"><small>Elige una foto de Fotos o Archivos. Se guarda en este navegador.</small><img id="photo-preview" alt="Vista previa del producto" hidden></label><label>O URL de fotografía (opcional)<input id="product-image" type="url" placeholder="https://..."></label>
+        <label>Descripción<textarea id="product-description" rows="3" maxlength="240" placeholder="Detalles, color, tallas..."></textarea></label>
+        <label>Precio (MXN)<input id="product-price" type="number" min="0" step="1" required placeholder="850"></label>
+        <label>Precio de paquete (opcional)<input id="product-bundle" type="text" maxlength="80" placeholder="3 piezas: $2,800 MXN"></label>
+        <div class="admin-actions"><button class="admin-save" type="submit" id="save-product">GUARDAR ARTÍCULO ↗</button><button class="admin-cancel" type="button" id="cancel-edit">CANCELAR</button></div>
+      </form>
+      <div class="admin-toolbar"><button type="button" id="export-products">EXPORTAR CATÁLOGO JSON ↓</button><label class="import-label">IMPORTAR CATÁLOGO JSON ↑<input type="file" id="import-products" accept="application/json,.json"></label></div>
+      <p class="admin-note" id="admin-status" aria-live="polite">Los artículos y fotos se guardan en este navegador del teléfono. Exporta el catálogo para respaldarlos o trasladarlos; no se publican automáticamente.</p>
+      <div id="admin-product-list" class="admin-product-list"></div>
+    </section>
+        <section class="statement">
       <div class="smiley yellow">☺</div><p>KEEP YOUR<br><em>WORLD</em> DIFFERENT.</p><div class="smiley purple">☺</div>
     </section>
     <section class="contact" id="contacto">
