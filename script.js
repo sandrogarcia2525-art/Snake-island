@@ -6,10 +6,20 @@ nav?.querySelectorAll('a').forEach(a=>a.addEventListener('click',closeMenu));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu()});
 const filters=[...document.querySelectorAll('.filter')];
 const products=[...document.querySelectorAll('.product-card')];
-filters.forEach(button=>button.addEventListener('click',()=>{const category=button.dataset.filter;filters.forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))});products.forEach(card=>{card.hidden=category!=='all'&&card.dataset.category!==category})}));
+filters.forEach(button=>button.addEventListener('click',()=>{const category=button.dataset.filter;filters.forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))});document.querySelectorAll('.product-card').forEach(card=>{card.hidden=category!=='all'&&card.dataset.category!==category})}));
 
 const cart=[];
-const prices={};
+const checkoutCatalog={
+ 'SUDADERAS 1 PIEZA':{price:850,units:1,category:'wear'},
+ 'SUDADERAS 10 PIEZAS':{price:4500,units:10,category:'wear'},
+ 'CAPS 3 PIEZAS':{price:750,units:3,category:'accessories'},
+ 'CAPS 5 PIEZAS':{price:1250,units:5,category:'accessories'},
+ 'PLAYERAS 1 PIEZA':{price:950,units:1,category:'wear'},
+ 'PLAYERAS 3 PIEZAS':{price:2800,units:3,category:'wear'},
+ 'SUÉTERES 1 PIEZA':{price:950,units:1,category:'wear'},
+ 'SUÉTERES 3 PIEZAS':{price:2800,units:3,category:'wear'}
+};
+const prices=Object.fromEntries(Object.entries(checkoutCatalog).map(([key,value])=>[key,value.price]));
 const orderPhone='524181516612';
 
 const money=value=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0}).format(value);
@@ -29,7 +39,7 @@ function renderCart(){
       const item=document.createElement('li');
       const title=document.createElement('span');
       const remove=document.createElement('button');
-      title.textContent=name+(entry.size?' / TALLA '+entry.size:'')+' — '+(Number.isFinite(entry.price)?money(entry.price):(prices[name]!==undefined?money(prices[name]):'PRECIO POR CONFIRMAR'));
+      title.textContent=name+(entry.sizes?.length?' / TALLAS '+entry.sizes.join(', '):(entry.size?' / TALLA '+entry.size:''))+' — '+(Number.isFinite(entry.price)?money(entry.price):(prices[name]!==undefined?money(prices[name]):'PRECIO POR CONFIRMAR'));
       remove.type='button';remove.className='cart-remove';remove.textContent='REMOVE';
       remove.setAttribute('aria-label','Quitar '+name+' de la bolsa');
       remove.addEventListener('click',()=>{cart.splice(index,1);renderCart()});
@@ -43,30 +53,35 @@ document.querySelector('#bag-open')?.addEventListener('click',()=>dialog?.showMo
 document.querySelector('#cart-close')?.addEventListener('click',()=>dialog?.close());
 dialog?.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});
 document.querySelector('#cart-clear')?.addEventListener('click',()=>{cart.length=0;renderCart()});
-document.querySelectorAll('.add-button').forEach(button=>button.addEventListener('click',()=>{
-  const name=button.dataset.product||'BLUE WORLDS ITEM';
-  const category=button.closest('.product-card')?.dataset.category||button.dataset.category||'';
-  let size='';
-  if(category==='wear'){size=(window.prompt('Elige talla: chica, mediana o grande','mediana')||'').trim().toLowerCase();if(!['chica','mediana','grande'].includes(size)){alert('Selecciona talla chica, mediana o grande.');return}}
-  cart.push({name,size,price:prices[name]});
-  renderCart();
-  dialog?.showModal();
-  if(toast){toast.textContent='ADDED TO YOUR BLUE WORLDS BAG';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
-}));
+function addCatalogItem(name){
+  const info=checkoutCatalog[name];
+  if(!info){alert('Este artículo local requiere confirmación antes de pagar.');return}
+  let sizes=[];
+  if(info.category==='wear'){
+    const raw=window.prompt('Indica '+info.units+' talla(s), separadas por coma. Opciones: chica, mediana, grande.','mediana');
+    if(raw===null)return;
+    sizes=raw.split(',').map(value=>value.trim().toLowerCase()).filter(Boolean);
+    if(sizes.length!==info.units||sizes.some(value=>!['chica','mediana','grande'].includes(value))){alert('Debes indicar exactamente '+info.units+' talla(s): chica, mediana o grande.');return}
+  }
+  cart.push({name,size:sizes[0]||'',sizes,price:info.price,quantity:1});
+  renderCart();dialog?.showModal();
+  if(toast){toast.textContent='ARTÍCULO AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
+}
+document.querySelectorAll('.add-button').forEach(button=>button.addEventListener('click',()=>addCatalogItem(button.dataset.product||'BLUE WORLDS ITEM')));
 const year=document.querySelector('#year');if(year)year.textContent=new Date().getFullYear();
 renderCart();
 const cardPay=document.querySelector('#pay-card');
 cardPay?.addEventListener('click',async()=>{
-  const items=cart.map(item=>({name:item.name,size:item.size||null,quantity:1}));
+  const items=cart.map(item=>({name:item.name,sizes:item.sizes||[],quantity:1}));
   if(!items.length){alert('Agrega primero un artículo a tu bolsa.');return}
-  if(items.some(item=>prices[item.name]===undefined)){alert('El catálogo aún no tiene precios verificados.');return}
+  if(items.some(item=>!checkoutCatalog[item.name])){alert('Los artículos agregados desde el panel local no están habilitados para cobro en línea.');return}
   cardPay.disabled=true;cardPay.textContent='CONECTANDO CON MERCADO PAGO…';
   try{const response=await fetch('/api/create-preference',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok||!data.init_point)throw new Error(data.error||'No se pudo iniciar el pago');window.location.assign(data.init_point)}catch(error){alert(error.message+' Verifica que MERCADOPAGO_ACCESS_TOKEN esté configurado en Vercel.');cardPay.disabled=false;cardPay.textContent='PAGAR CON TARJETA ↗'}
 });
 document.querySelector('#pay-cash')?.addEventListener('click',()=>{
   if(!cart.length){alert('Agrega primero un artículo a tu bolsa.');return}
   if(cart.some(item=>!Number.isFinite(item.price)&&prices[item.name]===undefined)){alert('El catálogo aún no tiene precios verificados.');return}
-  const lines=cart.map(item=>'- '+item.name+(item.size?' / talla '+item.size:'')+' — '+money(Number.isFinite(item.price)?item.price:prices[item.name]));
+  const lines=cart.map(item=>'- '+item.name+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+money(Number.isFinite(item.price)?item.price:prices[item.name]));
   const amount=cart.reduce((sum,item)=>sum+(Number.isFinite(item.price)?item.price:prices[item.name]),0);
   const message='Hola, quiero realizar este pedido de Snake Island × Blue Worlds con pago en efectivo contra entrega:\n'+lines.join('\n')+'\nTotal: '+money(amount)+'\nConfirmen disponibilidad, envío y forma de entrega, por favor.';
   window.open('https://wa.me/'+orderPhone+'?text='+encodeURIComponent(message),'_blank','noopener');
@@ -99,7 +114,7 @@ photoInput?.addEventListener('change',()=>{selectedPhoto=photoInput.files?.[0]||
 function addProductToBag(product,button){
  let size='';
  if(product.category==='wear'){size=(window.prompt('Elige talla: chica, mediana o grande','mediana')||'').trim().toLowerCase();if(!['chica','mediana','grande'].includes(size)){alert('Selecciona talla chica, mediana o grande.');return}}
- cart.push({name:product.name,size,price:Number(product.price)});
+ cart.push({name:product.name,size,sizes:size?[size]:[],price:Number(product.price),quantity:1});
  renderCart();dialog?.showModal();
  if(toast){toast.textContent='ARTÍCULO AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
 }
