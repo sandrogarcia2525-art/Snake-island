@@ -31,7 +31,7 @@ const toast=document.querySelector('#toast');
 const total=document.querySelector('#cart-total');
 let toastTimer;
 function renderCart(){
-  if(count)count.textContent=String(cart.length);
+  if(count)count.textContent=String(cart.reduce((sum,item)=>sum+(Number(item.quantity)||1),0));
   if(list){
     list.replaceChildren();
     cart.forEach((entry,index)=>{
@@ -84,6 +84,14 @@ document.querySelector('#pay-cash')?.addEventListener('click',()=>{
   const lines=cart.map(item=>'- '+item.name+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+money(Number.isFinite(item.price)?item.price:prices[item.name]));
   const amount=cart.reduce((sum,item)=>sum+(Number.isFinite(item.price)?item.price:prices[item.name]),0);
   const message='Hola, quiero consultar este pedido de Snake Island × Blue Worlds:\n'+lines.join('\n')+'\nTotal de productos: '+money(amount)+'\nConfirmen existencias, tallas, zona y costo de envío, y si es posible pagar en efectivo. Este mensaje es solo una consulta; aún no confirmo el pedido.';
+  window.open('https://wa.me/'+orderPhone+'?text='+encodeURIComponent(message),'_blank','noopener');
+});
+
+document.querySelector('#pay-transfer')?.addEventListener('click',()=>{
+  if(!cart.length){alert('Agrega primero un artículo a tu bolsa.');return}
+  const lines=cart.map(item=>'- '+item.name+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+money(Number.isFinite(item.price)?item.price:(prices[item.name]??0)));
+  const amount=cart.reduce((sum,item)=>sum+(Number.isFinite(item.price)?item.price:(prices[item.name]??0)),0);
+  const message='Hola, quiero solicitar los datos oficiales para pagar por transferencia o depósito mi pedido de Snake Island × Blue Worlds:\n'+lines.join('\n')+'\nTotal de productos: '+money(amount)+'\nPor favor envíenme los datos bancarios, titular y referencia. No realizaré el depósito hasta confirmar que los datos corresponden a Snake Island.';
   window.open('https://wa.me/'+orderPhone+'?text='+encodeURIComponent(message),'_blank','noopener');
 });
 
