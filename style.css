@@ -36,3 +36,6 @@
 .managed-product .product-visual{background:#111}
 @media(max-width:640px){.catalog-admin{padding:65px 6vw}.admin-heading{display:block}.admin-lock{display:inline-block;margin-top:10px}.admin-form{grid-template-columns:1fr;padding:16px}.admin-actions{grid-column:auto}.admin-product-row{align-items:flex-start;flex-direction:column}.admin-row-actions{width:100%}}
 \n.admin-form input[type=file]{padding:12px;border:1px dashed #b6df00;cursor:pointer}.admin-form label small{color:#777;font-size:9px;letter-spacing:0;text-transform:none}#photo-preview{display:block;max-width:180px;max-height:180px;object-fit:contain;border:1px solid #444;margin-top:8px;background:#111}#photo-preview[hidden]{display:none}\n
+/* Navigation targets for the original Blue Worlds storefront */
+#coleccion,.product-anchor{scroll-margin-top:24px}
+.product-anchor{display:block}
