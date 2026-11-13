@@ -125,6 +125,7 @@ gate.innerHTML='<h3>ACCESO DE ADMINISTRACIÓN</h3><p>Inicia sesión para gestion
 heading?.insertAdjacentElement('afterend',gate);
 const logout=document.createElement('button');
 logout.type='button';logout.className='admin-logout';logout.textContent='CERRAR SESIÓN';
+logout.hidden=true;
 heading?.append(logout);
 const lockLabel=admin.querySelector('.admin-lock');if(lockLabel)lockLabel.textContent='PANEL PROTEGIDO';
 function setStatus(message){if(statusLine)statusLine.textContent=message}
@@ -243,7 +244,7 @@ async function migrateLegacy(){
  setStatus('Catálogo guardado anteriormente en este teléfono migrado al catálogo público.');
 }
 async function unlock(){
- gate.hidden=true;controls.forEach(node=>node.hidden=false);
+ gate.hidden=true;logout.hidden=false;controls.forEach(node=>node.hidden=false);
  try{await loadRemote();await migrateLegacy();}catch(e){setStatus(e.message||'Error al conectar el catálogo.')}
 }
 gate.addEventListener('submit',async event=>{
@@ -253,7 +254,7 @@ gate.addEventListener('submit',async event=>{
  catch(e){note.textContent=e.message||'No se pudo iniciar sesión.';input.select()}
  finally{button.disabled=false}
 });
-logout.addEventListener('click',async()=>{await fetch('/api/admin-session',{method:'DELETE'});controls.forEach(node=>node.hidden=true);gate.hidden=false;setStatus('Sesión cerrada.')});
+logout.addEventListener('click',async()=>{await fetch('/api/admin-session',{method:'DELETE'});controls.forEach(node=>node.hidden=true);logout.hidden=true;gate.hidden=false;setStatus('Sesión cerrada.')});
 (async()=>{
  try{const response=await fetch('/api/catalog',{cache:'no-store'});if(response.ok){const data=await response.json();products=Array.isArray(data.products)?data.products:[];renderPublicCards()}}
  catch(error){console.warn('No se pudo cargar el catálogo compartido:',error)}
