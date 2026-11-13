@@ -22,6 +22,7 @@ module.exports = async function handler(req, res) {
   if (!Array.isArray(products) || products.length > 200) return res.status(400).json({ error: "Catálogo no válido." });
   const clean = [];
   for (const item of products) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return res.status(400).json({ error: "Hay un artículo con datos no válidos." });
     const product = {
       id: String(item.id || "").slice(0, 80),
       name: String(item.name || "").trim().slice(0, 70),
