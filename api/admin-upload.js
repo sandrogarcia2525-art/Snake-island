@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const { put } = require("@vercel/blob");
-const { isAuthed, unauthorized, safeOrigin } = require("./_admin");
+const { isAuthed, unauthorized, safeOrigin } = require("../lib/admin");
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (!isAuthed(req)) return unauthorized(res);
