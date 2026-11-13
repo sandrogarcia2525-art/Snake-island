@@ -67,7 +67,7 @@ function addCatalogItem(name){
   renderCart();dialog?.showModal();
   if(toast){toast.textContent='ARTÍCULO AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
 }
-document.querySelectorAll('.add-button').forEach(button=>button.addEventListener('click',()=>addCatalogItem(button.dataset.product||'BLUE WORLDS ITEM')));
+document.querySelectorAll('.add-button[data-product]').forEach(button=>button.addEventListener('click',()=>addCatalogItem(button.dataset.product)));
 document.querySelectorAll('.inquiry-button').forEach(button=>button.addEventListener('click',()=>{
   const product=button.dataset.inquiry||'producto Blue Worlds';
   const message='Hola, quiero consultar precio, existencias y fotografías disponibles de '+product+' de Snake Island × Blue Worlds.';
