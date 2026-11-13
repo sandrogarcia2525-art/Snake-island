@@ -141,6 +141,16 @@ async function saveRemote(){
  if(!r.ok)throw new Error(d.error||'No se pudo guardar el catálogo.');
  renderPublicCards();
 }
+function addProductToBag(product){
+ let size='';
+ if(product.category==='wear'){
+  size=(window.prompt('Elige talla: chica, mediana o grande','mediana')||'').trim().toLowerCase();
+  if(!['chica','mediana','grande'].includes(size)){alert('Selecciona talla chica, mediana o grande.');return}
+ }
+ cart.push({name:product.name,size,sizes:size?[size]:[],price:Number(product.price),quantity:1});
+ renderCart();dialog?.showModal();
+ if(toast){toast.textContent='ARTÍCULO AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
+}
 function renderPublicCards(){
  grid?.querySelectorAll('[data-managed="true"]').forEach(card=>card.remove());
  products.forEach(product=>{
@@ -242,5 +252,9 @@ gate.addEventListener('submit',async event=>{
  finally{button.disabled=false}
 });
 logout.addEventListener('click',async()=>{await fetch('/api/admin-session',{method:'DELETE'});controls.forEach(node=>node.hidden=true);gate.hidden=false;setStatus('Sesión cerrada.')});
-(async()=>{if(await requestSession())await unlock();else gate.hidden=false})();
+(async()=>{
+ try{const response=await fetch('/api/catalog',{cache:'no-store'});if(response.ok){const data=await response.json();products=Array.isArray(data.products)?data.products:[];renderPublicCards()}}
+ catch(error){console.warn('No se pudo cargar el catálogo compartido:',error)}
+ if(await requestSession())await unlock();else gate.hidden=false;
+})();
 })();
