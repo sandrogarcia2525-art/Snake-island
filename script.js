@@ -7,9 +7,40 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu()});
 const filters=[...document.querySelectorAll('.filter')];
 const products=[...document.querySelectorAll('.product-card')];
 filters.forEach(button=>button.addEventListener('click',()=>{const category=button.dataset.filter;filters.forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))});products.forEach(card=>{card.hidden=category!=='all'&&card.dataset.category!==category})}));
-let bagCount=0;
+
+const cart=[];
 const count=document.querySelector('#bag-count');
+const dialog=document.querySelector('#cart-dialog');
+const list=document.querySelector('#cart-items');
+const empty=document.querySelector('#cart-empty');
 const toast=document.querySelector('#toast');
-document.querySelectorAll('.add-button').forEach(button=>button.addEventListener('click',()=>{bagCount++;if(count)count.textContent=String(bagCount);if(toast){toast.textContent=button.dataset.product+' · AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),2200)}}));
 let toastTimer;
+function renderCart(){
+  if(count)count.textContent=String(cart.length);
+  if(list){
+    list.replaceChildren();
+    cart.forEach((name,index)=>{
+      const item=document.createElement('li');
+      const title=document.createElement('span');
+      const remove=document.createElement('button');
+      title.textContent=name;
+      remove.type='button';remove.className='cart-remove';remove.textContent='REMOVE';
+      remove.setAttribute('aria-label','Quitar '+name+' de la bolsa');
+      remove.addEventListener('click',()=>{cart.splice(index,1);renderCart()});
+      item.append(title,remove);list.append(item);
+    });
+  }
+  if(empty)empty.hidden=cart.length>0;
+}
+document.querySelector('#bag-open')?.addEventListener('click',()=>dialog?.showModal());
+document.querySelector('#cart-close')?.addEventListener('click',()=>dialog?.close());
+dialog?.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});
+document.querySelector('#cart-clear')?.addEventListener('click',()=>{cart.length=0;renderCart()});
+document.querySelectorAll('.add-button').forEach(button=>button.addEventListener('click',()=>{
+  cart.push(button.dataset.product||'BLUE WORLDS ITEM');
+  renderCart();
+  dialog?.showModal();
+  if(toast){toast.textContent='ADDED TO YOUR BLUE WORLDS BAG';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
+}));
 const year=document.querySelector('#year');if(year)year.textContent=new Date().getFullYear();
+renderCart();
