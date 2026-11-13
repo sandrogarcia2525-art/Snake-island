@@ -16,3 +16,24 @@
 .cart-bottom{border-top:1px solid #383838;padding-top:18px;display:flex;justify-content:space-between;gap:15px;align-items:center}
 .cart-bottom p{font-size:10px;line-height:1.6;color:#999;max-width:260px}
 @media(max-width:480px){.cart-dialog{padding:20px}.cart-head h2{font-size:34px}.cart-bottom{align-items:flex-start;flex-direction:column}}
+
+
+/* BLUE WORLDS — dimensional type and illustrated capsule collection */
+.hero h1,.manifesto h2,.shop-head h2,.contact h2,.contact-word{text-shadow:1px 1px 0 #c7a900,2px 2px 0 #a98e00,3px 3px 0 #806b00,4px 4px 0 #584900,7px 12px 18px rgba(0,0,0,.85);transform:perspective(700px) rotateX(3deg)}
+.hero h1 span,.shop-head h2 em,.manifesto h2 em,.contact h2 em{text-shadow:1px 1px 0 #b78cff,2px 2px 0 #7040c7,3px 3px 0 #4c2496,4px 5px 0 #321568,7px 12px 18px #000}
+.brand b,.marquee,.product-info h3,.cart-head h2{text-shadow:1px 1px 0 rgba(255,255,255,.14),2px 2px 0 rgba(135,76,255,.55),4px 5px 0 rgba(0,0,0,.9)}
+.tee b,.hoodie b,.poster b,.poster span,.tote b,.flower-shirt b,.bottle b{text-shadow:1px 1px 0 rgba(135,76,255,.85),2px 2px 0 rgba(135,76,255,.65),3px 3px 0 rgba(0,0,0,.7),5px 7px 8px rgba(0,0,0,.6)}
+.tee-flower{position:absolute;top:24px;left:50%;transform:translateX(-50%) rotate(-12deg);font-size:29px;color:var(--purple);text-shadow:2px 3px 0 #3d1b8b,4px 5px 5px #000}
+.hoodie-mark{position:absolute;bottom:20px;left:35px;color:var(--yellow);font-size:24px;text-shadow:2px 2px 0 var(--purple),4px 5px 5px #000}
+.poster small{font-size:7px;letter-spacing:2px;color:#fff;margin-top:9px;text-shadow:2px 2px 0 var(--purple)}
+.art-flower{background:radial-gradient(ellipse at 50% 50%,#27202f,#111 65%)}
+.flower-shirt{width:190px;height:215px;background:#e8e5df;clip-path:polygon(24% 0,39% 7%,61% 7%,76% 0,100% 17%,84% 42%,74% 35%,74% 100%,26% 100%,26% 35%,16% 42%,0 17%);position:relative;display:grid;place-items:center;color:#080808;transform:rotate(5deg);filter:drop-shadow(0 18px 15px #000)}
+.flower-shirt b{font:20px/.9 "Archivo Black",sans-serif;text-align:center}
+.flower-shirt i{position:absolute;bottom:23px;right:30px;font-style:normal;font-size:42px;color:var(--purple);text-shadow:2px 3px 0 var(--yellow),4px 5px 0 #321568}
+.art-bottle{background:radial-gradient(ellipse at 50% 60%,#262018,#111 65%)}
+.bottle{width:105px;height:220px;border-radius:25px 25px 30px 30px;background:linear-gradient(90deg,#9c6dff 0%,#c7a8ff 18%,#8750ed 50%,#4b2794 100%);position:relative;display:flex;align-items:center;justify-content:center;box-shadow:inset -10px 0 12px rgba(0,0,0,.25),inset 8px 0 12px rgba(255,255,255,.22),12px 20px 25px #000;transform:rotate(-8deg)}
+.bottle:before{content:"";position:absolute;top:-24px;left:28px;width:49px;height:28px;border-radius:8px 8px 3px 3px;background:repeating-linear-gradient(90deg,#ffd400 0 4px,#c99e00 4px 6px);box-shadow:0 4px 0 #51328b}
+.bottle:after{content:"";position:absolute;inset:12px 9px;border:1px solid rgba(255,255,255,.25);border-radius:17px}
+.bottle b{font:15px/.95 "Archivo Black",sans-serif;color:var(--yellow);text-align:center;z-index:1}
+.bottle i{position:absolute;bottom:27px;right:20px;color:#fff;font-style:normal;font-size:20px;z-index:1}
+@media(max-width:600px){.flower-shirt{transform:scale(.75) rotate(5deg)}.bottle{transform:scale(.78) rotate(-8deg)}.hero h1,.manifesto h2,.shop-head h2,.contact h2{text-shadow:1px 1px 0 #b99c00,2px 2px 0 #806b00,4px 7px 10px #000}}
