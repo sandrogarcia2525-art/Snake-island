@@ -1,8 +1,8 @@
 const catalog = {
-  "BLUE WORLD TEE": { price: 599, category: "wear" },
-  "WORLD HOODIE": { price: 899, category: "wear" },
-  "SMILE CAP": { price: 499, category: "accessories" },
-  "BLUE TOTE BAG": { price: 399, category: "accessories" }
+  "BLUE WORLD TEE": { price: null, category: "wear" },
+  "WORLD HOODIE": { price: null, category: "wear" },
+  "SMILE CAP": { price: null, category: "accessories" },
+  "BLUE TOTE BAG": { price: null, category: "accessories" }
 };
 const sizes = new Set(["chica", "mediana", "grande"]);
 
@@ -10,6 +10,9 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Método no permitido." });
+  }
+  if (process.env.SNAKE_CATALOG_CONFIRMED !== "true" || process.env.SNAKE_DELIVERY_CONFIRMED !== "true") {
+    return res.status(503).json({ error: "Checkout pausado: faltan validar precios, existencias y condiciones de entrega." });
   }
   const token = process.env.MERCADOPAGO_ACCESS_TOKEN;
   if (!token) return res.status(503).json({ error: "El pago con tarjeta aún no está configurado." });
@@ -23,7 +26,7 @@ module.exports = async function handler(req, res) {
   for (const item of items) {
     const product = catalog[item && item.name];
     const quantity = Number(item && item.quantity);
-    if (!product || !Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
+    if (!product || !Number.isFinite(product.price) || product.price <= 0 || !Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
       return res.status(400).json({ error: "Uno de los artículos no está disponible para pago en línea." });
     }
     if (product.category === "wear" && !sizes.has(item.size)) {
