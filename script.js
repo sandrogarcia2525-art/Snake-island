@@ -14,10 +14,22 @@ if (year) year.textContent = new Date().getFullYear();
 
 // Panel local de catálogo: solo prendas y accesorios de ropa.
 const STORAGE_KEY = 'snake-island-blue-world-catalog-v1';
+const PHOTO_DB = 'snake-island-photo-library';
+const PHOTO_STORE = 'photos';
+let selectedPhoto = null;
+function openPhotoDB() { return new Promise((resolve,reject) => { const req=indexedDB.open(PHOTO_DB,1); req.onupgradeneeded=()=>req.result.createObjectStore(PHOTO_STORE); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); }); }
+async function savePhoto(id, blob) { const db=await openPhotoDB(); return new Promise((resolve,reject)=>{const tx=db.transaction(PHOTO_STORE,'readwrite');tx.objectStore(PHOTO_STORE).put(blob,id);tx.oncomplete=()=>{db.close();resolve(id)};tx.onerror=()=>reject(tx.error);}); }
+async function getPhoto(id) { if(!id)return null; const db=await openPhotoDB(); return new Promise((resolve,reject)=>{const req=db.transaction(PHOTO_STORE).objectStore(PHOTO_STORE).get(id);req.onsuccess=()=>{db.close();resolve(req.result||null)};req.onerror=()=>reject(req.error);}); }
+async function deletePhoto(id) { if(!id)return; const db=await openPhotoDB(); return new Promise(resolve=>{const tx=db.transaction(PHOTO_STORE,'readwrite');tx.objectStore(PHOTO_STORE).delete(id);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();resolve()};}); }
+async function photoAsDataURL(id) { const blob=await getPhoto(id); if(!blob)return ''; return await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>resolve('');reader.readAsDataURL(blob);}); }
+
 const productForm = document.querySelector('#product-form');
 const productList = document.querySelector('#admin-product-list');
 const statusLine = document.querySelector('#admin-status');
 const productGrid = document.querySelector('.blue-products');
+const photoInput = document.querySelector('#product-photo');
+const photoPreview = document.querySelector('#photo-preview');
+photoInput?.addEventListener('change', () => { selectedPhoto=photoInput.files?.[0] || null; if(selectedPhoto){ const url=URL.createObjectURL(selectedPhoto); photoPreview.src=url; photoPreview.hidden=false; } else { photoPreview.hidden=true; } });
 const allowedCategories = ['hoodies', 'caps', 'playeras', 'sueteres'];
 const categoryNames = {hoodies:'SUDADERAS',caps:'CAPS',playeras:'PLAYERAS',sueteres:'SUÉTERES'};
 let products = [];
@@ -45,7 +57,7 @@ function renderManagedProducts() {
       document.querySelector('#edit-id').value = product.id;
       document.querySelector('#product-name').value = product.name;
       document.querySelector('#product-category').value = product.category;
-      document.querySelector('#product-image').value = product.image || '';
+      document.querySelector('#product-image').value = product.image || '';\n      selectedPhoto=null; photoInput.value=''; photoPreview.hidden=true; photoPreview.removeAttribute('src');\n      if(product.photoId) getPhoto(product.photoId).then(blob=>{if(blob){photoPreview.src=URL.createObjectURL(blob);photoPreview.hidden=false;}});
       document.querySelector('#product-description').value = product.description || '';
       document.querySelector('#product-price').value = product.price;
       document.querySelector('#product-bundle').value = product.bundle || '';
@@ -107,10 +119,10 @@ productForm?.addEventListener('submit', event => {
   if (!product.name || !allowedCategories.includes(category) || !Number.isFinite(price) || price < 0) return;
   const index = products.findIndex(item => item.id === product.id);
   if (index >= 0) products[index] = product; else products.push(product);
-  saveLocal(); renderManagedProducts(); productForm.reset();
+  saveLocal(); renderManagedProducts(); productForm.reset(); selectedPhoto=null; photoPreview.hidden=true; photoPreview.removeAttribute('src');
   document.querySelector('#edit-id').value = '';
   document.querySelector('#save-product').textContent = 'GUARDAR ARTÍCULO ↗';
-  statusLine.textContent = 'Guardado en este navegador. Exporta el JSON para publicar el cambio en la tienda.';
+  statusLine.textContent = 'Guardado en este teléfono. Exporta el JSON para respaldar fotos y precios; aún no se publica en la tienda.';
 });
 document.querySelector('#cancel-edit')?.addEventListener('click', () => {
   productForm.reset(); document.querySelector('#edit-id').value = '';
