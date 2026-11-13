@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const { setSession, safeOrigin } = require("./_admin");
+const { setSession, safeOrigin } = require("../lib/admin");
 
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
