@@ -1,4 +1,4 @@
-const { isAuthed, clearSession } = require("./_admin");
+const { isAuthed, clearSession } = require("../lib/admin");
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method === "DELETE") { clearSession(res); return res.status(200).json({ ok: true }); }
