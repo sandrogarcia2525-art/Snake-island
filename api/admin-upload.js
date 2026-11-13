@@ -8,7 +8,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") { res.setHeader("Allow", "POST"); return res.status(405).json({ error: "Método no permitido." }); }
   const dataUrl = String(req.body && req.body.dataUrl || "");
   const match = dataUrl.match(/^data:(image\/(?:jpeg|png|webp|gif|heic|heif));base64,([A-Za-z0-9+/=]+)$/);
-  if (!match) return res.status(400).json({ error: "Selecciona una imagen JPG, PNG, WEBP o GIF." });
+  if (!match) return res.status(400).json({ error: "Selecciona una imagen compatible desde Fotos o Archivos." });
   const buffer = Buffer.from(match[2], "base64");
   if (!buffer.length || buffer.length > 3 * 1024 * 1024) return res.status(413).json({ error: "La imagen debe pesar máximo 3 MB." });
   try {
