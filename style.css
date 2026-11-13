@@ -6,3 +6,32 @@
 .price{display:block;margin-top:6px;color:#b6df00;font-size:12px;font-weight:800;letter-spacing:.5px}.blue-world{padding-top:100px}.blue-world .section-head .eyebrow{color:#b6df00}
 
 .visual-gallery{display:grid;grid-template-columns:1fr minmax(240px,420px);gap:40px;align-items:center;padding:45px 0 10px;border-top:1px solid #292929}.gallery-copy h3{font:normal clamp(38px,5vw,64px)/.95 "Archivo Black",sans-serif;letter-spacing:-2px;margin:14px 0}.gallery-copy h3 em{font-style:normal;color:var(--yellow)}.gallery-copy>p:last-child{max-width:360px;color:#999;font-size:12px;line-height:1.8}.gallery-photo{margin:0;background:#101010;border:1px solid #292929;padding:10px}.gallery-photo img{display:block;width:100%;max-height:440px;object-fit:contain;background:#050505}.gallery-photo figcaption{padding:10px 3px 2px;color:#888;font-size:9px;letter-spacing:1px}@media(max-width:640px){.visual-gallery{grid-template-columns:1fr;gap:18px;padding-top:30px}.gallery-photo{max-width:100%}.gallery-photo img{max-height:380px}}
+
+/* Panel local de administración */
+.catalog-admin{padding:85px 9vw 95px;background:#0b0b0b;border-top:1px solid #292929}
+.admin-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:25px;margin-bottom:35px}
+.admin-heading h2{font:normal clamp(42px,6vw,76px)/.95 "Archivo Black",sans-serif;letter-spacing:-3px;margin:18px 0}
+.admin-heading h2 em{font-style:normal;color:var(--yellow)}
+.admin-intro{max-width:460px;color:#999;font-size:12px;line-height:1.8}
+.admin-lock{border:1px solid #555;border-radius:30px;padding:10px 14px;color:#b6df00;font-size:8px;font-weight:800;letter-spacing:1.5px;white-space:nowrap}
+.admin-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px;padding:25px;border:1px solid #303030;background:#080808}
+.admin-form label{display:flex;flex-direction:column;gap:8px;color:#aaa;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.admin-form input,.admin-form select,.admin-form textarea{width:100%;padding:13px;background:#111;color:#f7f5f2;border:1px solid #393939;border-radius:2px;font:12px "DM Sans",sans-serif;outline:none}
+.admin-form input:focus,.admin-form select:focus,.admin-form textarea:focus{border-color:#b6df00}
+.admin-form textarea{resize:vertical}
+.admin-actions{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap}
+.admin-actions button,.admin-toolbar button,.import-label{padding:13px 16px;border:1px solid #b6df00;background:#b6df00;color:#050505;font-size:9px;font-weight:900;letter-spacing:1px;cursor:pointer}
+.admin-actions .admin-cancel{background:transparent;color:#aaa;border-color:#555}
+.admin-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.import-label{display:inline-flex;align-items:center}
+.import-label input{display:none}
+.admin-note{color:#888;font-size:10px;line-height:1.7}
+.admin-product-list{display:grid;gap:8px;margin-top:20px}
+.admin-product-row{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:14px;border:1px solid #292929;background:#080808}
+.admin-product-row strong{display:block;font-size:12px}
+.admin-product-row span{display:block;color:#999;font-size:10px;margin-top:5px}
+.admin-row-actions{display:flex;gap:7px}
+.admin-row-actions button{background:transparent;color:#b6df00;border:1px solid #555;padding:8px;font-size:8px;font-weight:800;cursor:pointer}
+.managed-product .product-visual img{width:100%;height:100%;object-fit:cover}
+.managed-product .product-visual{background:#111}
+@media(max-width:640px){.catalog-admin{padding:65px 6vw}.admin-heading{display:block}.admin-lock{display:inline-block;margin-top:10px}.admin-form{grid-template-columns:1fr;padding:16px}.admin-actions{grid-column:auto}.admin-product-row{align-items:flex-start;flex-direction:column}.admin-row-actions{width:100%}}
