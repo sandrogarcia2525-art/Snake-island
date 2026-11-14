@@ -127,8 +127,16 @@ const grid=document.querySelector('.product-grid');
 const photoInput=document.querySelector('#product-photo');
 const photoPreview=document.querySelector('#photo-preview');
 let selectedPhoto=null,products=[];
+const importedSeed=[
+ {id:"local-import-estampilla-green",name:"Estampilla Green",category:"collectibles",image:"",description:"Calcomanía de la mercancía en inventario.",price:25,stock:1000,photoId:""},
+ {id:"local-import-second-edition",name:"Second edition mood darkness full stock",category:"wear",image:"",description:"Prenda Blue-World inc. Disponible en tallas chica, mediana y grande.",price:1500,stock:1000,photoId:""},
+ {id:"local-import-first-edition",name:"First edition production by Blue World inc",category:"wear",image:"",description:"Edición completa First edition. Tallas chica, mediana y grande.",price:1500,stock:1000,photoId:""}
+];
 try{products=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch{}
 if(!Array.isArray(products))products=[];
+const existingIds=new Set(products.map(item=>item.id));
+importedSeed.forEach(item=>{if(!existingIds.has(item.id))products.push(item)});
+try{localStorage.setItem(STORAGE_KEY,JSON.stringify(products))}catch{}
 const safe=value=>String(value??'').trim();
 const save=()=>localStorage.setItem(STORAGE_KEY,JSON.stringify(products));
 function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(PHOTO_DB,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(PHOTO_STORE))req.result.createObjectStore(PHOTO_STORE)};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
@@ -175,10 +183,12 @@ function render(){
   const img=document.createElement('img');img.alt=product.name;img.loading='lazy';
   if(product.image)img.src=product.image;else if(product.photoId)getPhoto(product.photoId).then(blob=>{if(blob)img.src=URL.createObjectURL(blob)});
   visual.append(img);
+  if(!product.image&&!product.photoId){const fallback=document.createElement('div');fallback.className='catalog-placeholder';fallback.textContent=product.name;visual.append(fallback)}
   const data=document.createElement('div');data.className='product-info';
   const wrap=document.createElement('div'),small=document.createElement('small'),title=document.createElement('h3'),price=document.createElement('strong');
   small.textContent='BLUE WORLDS / NUEVO';title.textContent=product.name;price.textContent='$'+Number(product.price).toLocaleString('es-MX')+' MXN';
   wrap.append(small,title,price);data.append(wrap);
+  if(product.description){const desc=document.createElement('p');desc.className='managed-description';desc.textContent=product.description;data.append(desc)}
   const add=document.createElement('button');add.className='add-button';add.type='button';add.textContent='AÑADIR A LA BOLSA +';
   add.addEventListener('click',()=>addProductToBag(product,add));
   card.append(visual,data,add);grid?.append(card);
