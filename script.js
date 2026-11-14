@@ -133,9 +133,11 @@ if(!Array.isArray(products))products=[];
 // Se inicializa únicamente si este navegador aún no tiene catálogo local.
 if(!products.length){
  products=[
-  {id:'import-planas-20261114',name:'Planas',category:'collectibles',image:'',description:'Láminas de stickers. 25 piezas por $2,000 MXN con envío incluido.',price:250,stock:0,photoId:''},
-  {id:'import-nenas-20261114',name:'Nenas',category:'accessories',image:'',description:'Dulces surtidos. 5 piezas por $300 MXN; 10 piezas por $550 MXN.',price:150,stock:0,photoId:''}
+  {id:'import-planas-20261114',name:'Planas',category:'collectibles',image:'',description:'Láminas de stickers. 25 piezas por $2,000 MXN con envío incluido.',price:250,stock:1000,photoId:''},
+  {id:'import-nenas-20261114',name:'Nenas',category:'accessories',image:'',description:'Dulces surtidos. 5 piezas por $300 MXN; 10 piezas por $550 MXN.',price:150,stock:1000,photoId:''}
  ];
+ // Existencias confirmadas por el usuario: 1,000 unidades de cada artículo importado.
+ for(const p of products){if(p.id==='import-planas-20261114'||p.id==='import-nenas-20261114')p.stock=1000;}
  save();
 }
 
