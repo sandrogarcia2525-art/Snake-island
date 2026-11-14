@@ -129,6 +129,16 @@ const photoPreview=document.querySelector('#photo-preview');
 let selectedPhoto=null,products=[];
 try{products=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch{}
 if(!Array.isArray(products))products=[];
+// Importación inicial del catálogo recibido (solo artículos claramente identificados como stickers y dulces).
+// Se inicializa únicamente si este navegador aún no tiene catálogo local.
+if(!products.length){
+ products=[
+  {id:'import-planas-20261114',name:'Planas',category:'collectibles',image:'',description:'Láminas de stickers. 25 piezas por $2,000 MXN con envío incluido.',price:250,stock:0,photoId:''},
+  {id:'import-nenas-20261114',name:'Nenas',category:'accessories',image:'',description:'Dulces surtidos. 5 piezas por $300 MXN; 10 piezas por $550 MXN.',price:150,stock:0,photoId:''}
+ ];
+ save();
+}
+
 const safe=value=>String(value??'').trim();
 const save=()=>localStorage.setItem(STORAGE_KEY,JSON.stringify(products));
 function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(PHOTO_DB,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(PHOTO_STORE))req.result.createObjectStore(PHOTO_STORE)};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
