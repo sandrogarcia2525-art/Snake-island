@@ -129,20 +129,19 @@ const photoPreview=document.querySelector('#photo-preview');
 let selectedPhoto=null,products=[];
 try{products=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch{}
 if(!Array.isArray(products))products=[];
+const save=()=>localStorage.setItem(STORAGE_KEY,JSON.stringify(products));
 // Importación inicial del catálogo recibido (solo artículos claramente identificados como stickers y dulces).
-// Se inicializa únicamente si este navegador aún no tiene catálogo local.
 if(!products.length){
  products=[
   {id:'import-planas-20261114',name:'Planas',category:'collectibles',image:'',description:'Láminas de stickers. 25 piezas por $2,000 MXN con envío incluido.',price:250,stock:1000,photoId:''},
   {id:'import-nenas-20261114',name:'Nenas',category:'accessories',image:'',description:'Dulces surtidos. 5 piezas por $300 MXN; 10 piezas por $550 MXN.',price:150,stock:1000,photoId:''}
  ];
- // Existencias confirmadas por el usuario: 1,000 unidades de cada artículo importado.
- for(const p of products){if(p.id==='import-planas-20261114'||p.id==='import-nenas-20261114')p.stock=1000;}
- save();
 }
+// Existencias confirmadas por el usuario: 1,000 unidades de cada artículo importado.
+for(const p of products){if(p.id==='import-planas-20261114'||p.id==='import-nenas-20261114')p.stock=1000;}
+save();
 
 const safe=value=>String(value??'').trim();
-const save=()=>localStorage.setItem(STORAGE_KEY,JSON.stringify(products));
 function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(PHOTO_DB,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(PHOTO_STORE))req.result.createObjectStore(PHOTO_STORE)};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 async function savePhoto(id,blob){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(PHOTO_STORE,'readwrite');tx.objectStore(PHOTO_STORE).put(blob,id);tx.oncomplete=()=>{db.close();resolve(id)};tx.onerror=()=>{db.close();reject(tx.error)}})}
 async function getPhoto(id){if(!id)return null;const db=await openDB();return new Promise((resolve,reject)=>{const req=db.transaction(PHOTO_STORE).objectStore(PHOTO_STORE).get(id);req.onsuccess=()=>{db.close();resolve(req.result||null)};req.onerror=()=>{db.close();reject(req.error)}})}
