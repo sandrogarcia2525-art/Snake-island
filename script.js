@@ -83,23 +83,37 @@ cardPay?.addEventListener('click',async()=>{
   cardPay.disabled=true;cardPay.textContent='CONECTANDO CON MERCADO PAGO…';
   try{const response=await fetch('/api/create-preference',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok||!data.init_point)throw new Error(data.error||'No se pudo iniciar el pago');window.location.assign(data.init_point)}catch(error){alert(error.message+' Verifica que MERCADOPAGO_ACCESS_TOKEN esté configurado en Vercel.');cardPay.disabled=false;cardPay.textContent='PAGAR CON TARJETA ↗'}
 });
+function shippingData(){
+ const form=document.querySelector('#shipping-details');
+ if(!form||!form.reportValidity())return null;
+ const data=Object.fromEntries(new FormData(form).entries());
+ if(!/^[0-9]{5}$/.test(data.postalCode||'')){alert('Escribe un código postal mexicano de 5 dígitos.');return null}
+ return data;
+}
+function shippingMessage(data){
+ return 'DATOS DE ENTREGA NACIONAL (MÉXICO):\\nNombre: '+data.fullName+'\\nTeléfono: '+data.phone+
+ '\\nCalle: '+data.street+' '+data.exterior+(data.interior?' Int. '+data.interior:'')+
+ '\\nColonia: '+data.neighborhood+'\\nMunicipio: '+data.municipality+'\\nEstado: '+data.state+
+ '\\nC.P.: '+data.postalCode+(data.references?'\\nReferencias: '+data.references:'')+
+ '\\nConfirmen cobertura y costo de envío antes del pago.';
+}
 document.querySelector('#pay-cash')?.addEventListener('click',()=>{
-  if(!cart.length){alert('Agrega primero un artículo a tu bolsa.');return}
-  if(cart.some(item=>!Number.isFinite(item.price)&&prices[item.name]===undefined)){alert('El catálogo aún no tiene precios verificados.');return}
-  const lines=cart.map(item=>'- '+item.name+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+money(Number.isFinite(item.price)?item.price:prices[item.name]));
-  const amount=cart.reduce((sum,item)=>sum+(Number.isFinite(item.price)?item.price:prices[item.name]),0);
-  const message='Hola, quiero consultar este pedido de Snake Island × Blue Worlds:\n'+lines.join('\n')+'\nTotal de productos: '+money(amount)+'\nConfirmen existencias, tallas, zona y costo de envío, y si es posible pagar en efectivo. Este mensaje es solo una consulta; aún no confirmo el pedido.';
-  window.open('https://wa.me/'+orderPhone+'?text='+encodeURIComponent(message),'_blank','noopener');
+ if(!cart.length){alert('Agrega primero un artículo a tu bolsa.');return}
+ if(cart.some(item=>!Number.isFinite(item.price)&&prices[item.name]===undefined)){alert('El catálogo aún no tiene precios verificados.');return}
+ const address=shippingData();if(!address)return;
+ const lines=cart.map(item=>'- '+item.name+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+money(Number.isFinite(item.price)?item.price:prices[item.name]));
+ const amount=cart.reduce((sum,item)=>sum+(Number.isFinite(item.price)?item.price:prices[item.name]),0);
+ const message='Hola, quiero solicitar este pedido Snake Island × Blue Worlds:\\n'+lines.join('\\n')+'\\nSubtotal de productos: '+money(amount)+'\\n'+shippingMessage(address)+'\\nForma de pago solicitada: efectivo. Confirmen disponibilidad y total final. Aún no confirmo el pedido.';
+ window.open('https://wa.me/'+orderPhone+'?text='+encodeURIComponent(message),'_blank','noopener');
 });
-
 document.querySelector('#pay-transfer')?.addEventListener('click',()=>{
-  if(!cart.length){alert('Agrega primero un artículo a tu bolsa.');return}
-  const lines=cart.map(item=>'- '+item.name+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+money(Number.isFinite(item.price)?item.price:(prices[item.name]??0)));
-  const amount=cart.reduce((sum,item)=>sum+(Number.isFinite(item.price)?item.price:(prices[item.name]??0)),0);
-  const message='Hola, quiero solicitar los datos oficiales para pagar por transferencia o depósito mi pedido de Snake Island × Blue Worlds:\n'+lines.join('\n')+'\nTotal de productos: '+money(amount)+'\nPor favor envíenme los datos bancarios, titular y referencia. No realizaré el depósito hasta confirmar que los datos corresponden a Snake Island.';
-  window.open('https://wa.me/'+orderPhone+'?text='+encodeURIComponent(message),'_blank','noopener');
+ if(!cart.length){alert('Agrega primero un artículo a tu bolsa.');return}
+ const address=shippingData();if(!address)return;
+ const lines=cart.map(item=>'- '+item.name+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+money(Number.isFinite(item.price)?item.price:(prices[item.name]??0)));
+ const amount=cart.reduce((sum,item)=>sum+(Number.isFinite(item.price)?item.price:(prices[item.name]??0)),0);
+ const message='Hola, solicito datos oficiales para transferencia o depósito de mi pedido Snake Island × Blue Worlds:\\n'+lines.join('\\n')+'\\nSubtotal de productos: '+money(amount)+'\\n'+shippingMessage(address)+'\\nEnvíenme datos bancarios y total final con envío. No depositaré hasta confirmar titular, cobertura y costo.';
+ window.open('https://wa.me/'+orderPhone+'?text='+encodeURIComponent(message),'_blank','noopener');
 });
-
 (()=>{
 const STORAGE_KEY='snake-island-blue-world-catalog-v2';
 const PHOTO_DB='snake-island-photo-library';
