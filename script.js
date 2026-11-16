@@ -17,7 +17,11 @@ const checkoutCatalog={
  'PLAYERAS 1 PIEZA':{price:950,units:1,category:'wear'},
  'PLAYERAS 3 PIEZAS':{price:2800,units:3,category:'wear'},
  'SUÉTERES 1 PIEZA':{price:950,units:1,category:'wear'},
- 'SUÉTERES 3 PIEZAS':{price:2800,units:3,category:'wear'}
+ 'SUÉTERES 3 PIEZAS':{price:2800,units:3,category:'wear'},
+ 'CUADRO 1 PZ':{price:200,units:1,category:'accessories',stock:1000},
+ 'ESTAMPILLA GREEN':{price:25,units:1,category:'collectibles',stock:1000},
+ 'SECOND EDITION MOOD DARKNESS FULL STOCK':{price:1500,units:1,category:'wear',stock:1000},
+ 'FIRST EDITION PRODUCTION BY BLUE WORLD INC':{price:1500,units:1,category:'wear',stock:1000}
 };
 const prices=Object.fromEntries(Object.entries(checkoutCatalog).map(([key,value])=>[key,value.price]));
 const orderPhone='524181516612';
@@ -50,14 +54,18 @@ function renderCart(){
   if(empty)empty.hidden=cart.length>0;
   if(total)total.textContent=money(cart.reduce((sum,entry)=>sum+(Number.isFinite(entry.price)?entry.price:(prices[entry.name]||0)),0));
   syncManagedStock();
+  syncStaticCatalogStock();
 }
 document.querySelector('#bag-open')?.addEventListener('click',()=>dialog?.showModal());
 document.querySelector('#cart-close')?.addEventListener('click',()=>dialog?.close());
 dialog?.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});
 document.querySelector('#cart-clear')?.addEventListener('click',()=>{cart.length=0;renderCart()});
+function syncStaticCatalogStock(){document.querySelectorAll('.imported-catalog-item').forEach(card=>{const name=card.querySelector('[data-product]')?.dataset.product;const info=checkoutCatalog[name];if(!info)return;const used=cart.filter(item=>item.name===name).reduce((sum,item)=>sum+(Number(item.quantity)||1),0);const remaining=Math.max(0,info.stock-used);const button=card.querySelector('.add-button');if(button){button.disabled=remaining===0;button.textContent=remaining===0?'SIN EXISTENCIAS':'AÑADIR 1 PIEZA +';}})}
 function addCatalogItem(name){
   const info=checkoutCatalog[name];
   if(!info){alert('Este artículo local requiere confirmación antes de pagar.');return}
+  const current=cart.filter(item=>item.name===name).reduce((sum,item)=>sum+(Number(item.quantity)||1),0);
+  if(Number.isFinite(info.stock)&&current>=info.stock){alert('No hay más existencias registradas para este artículo.');return}
   let sizes=[];
   if(info.category==='wear'){
     const raw=window.prompt('Indica '+info.units+' talla(s), separadas por coma. Opciones: chica, mediana, grande.','mediana');
