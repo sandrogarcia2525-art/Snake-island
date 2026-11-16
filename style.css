@@ -121,3 +121,11 @@
 .art-managed{overflow:hidden}
 .art-managed img{display:block;width:100%;height:100%;min-height:240px;object-fit:cover}
 .managed-stock{display:block;margin:.6rem 0;color:#bdbdbd;font-size:.72rem;letter-spacing:.08em}
+
+
+/* WhatsApp contact link in the landing presentation */
+.hero-actions{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap}
+.whatsapp-cta{border-color:#25d366;color:#fff}
+.whatsapp-cta span{color:#25d366}
+.whatsapp-cta:hover{background:#25d366;border-color:#25d366;color:#050505}
+@media(max-width:600px){.hero-actions{gap:8px}.hero-cta{padding:12px 14px;font-size:8px;gap:14px}.whatsapp-cta{border-color:#25d366}}
