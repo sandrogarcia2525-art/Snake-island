@@ -1,6 +1,6 @@
 const { put, list } = require("@vercel/blob");
 const { isAuthed, unauthorized, safeOrigin } = require("../lib/admin");
-const allowed = new Set(["wear", "accessories", "collectibles"]);
+const allowed = new Set(["wear", "accessories", "collectibles", "merch-green"]);
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (!isAuthed(req)) return unauthorized(res);
