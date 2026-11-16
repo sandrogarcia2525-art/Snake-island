@@ -30,6 +30,7 @@ const empty=document.querySelector('#cart-empty');
 const toast=document.querySelector('#toast');
 const total=document.querySelector('#cart-total');
 let toastTimer;
+let syncManagedStock=()=>{};
 function renderCart(){
   if(count)count.textContent=String(cart.reduce((sum,item)=>sum+(Number(item.quantity)||1),0));
   if(list){
