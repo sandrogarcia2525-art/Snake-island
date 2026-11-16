@@ -48,6 +48,7 @@ function renderCart(){
   }
   if(empty)empty.hidden=cart.length>0;
   if(total)total.textContent=money(cart.reduce((sum,entry)=>sum+(Number.isFinite(entry.price)?entry.price:(prices[entry.name]||0)),0));
+  syncManagedStock();
 }
 document.querySelector('#bag-open')?.addEventListener('click',()=>dialog?.showModal());
 document.querySelector('#cart-close')?.addEventListener('click',()=>dialog?.close());
@@ -150,9 +151,12 @@ async function photoData(id){const blob=await getPhoto(id);if(!blob)return'';ret
 function reset(){form.reset();document.querySelector('#edit-id').value='';document.querySelector('#save-product').textContent='GUARDAR ARTÍCULO ↗';selectedPhoto=null;photoPreview.hidden=true;photoPreview.removeAttribute('src')}
 photoInput?.addEventListener('change',()=>{selectedPhoto=photoInput.files?.[0]||null;if(selectedPhoto){if(!selectedPhoto.type.startsWith('image/')){selectedPhoto=null;photoInput.value='';statusLine.textContent='Selecciona un archivo de imagen.';return}photoPreview.src=URL.createObjectURL(selectedPhoto);photoPreview.hidden=false}else{photoPreview.hidden=true;photoPreview.removeAttribute('src')}});
 function addProductToBag(product,button){
+ const alreadyInBag=cart.filter(item=>item.managedId===product.id).reduce((sum,item)=>sum+(Number(item.quantity)||1),0);
+ const stock=Math.max(0,Number(product.stock)||0);
+ if(alreadyInBag>=stock){alert(stock===0?'Este artículo no tiene existencias registradas.':'Ya agregaste todas las existencias disponibles de este artículo.');return}
  let size='';
  if(product.category==='wear'){size=(window.prompt('Elige talla: chica, mediana o grande','mediana')||'').trim().toLowerCase();if(!['chica','mediana','grande'].includes(size)){alert('Selecciona talla chica, mediana o grande.');return}}
- cart.push({name:product.name,size,sizes:size?[size]:[],price:Number(product.price),quantity:1});
+ cart.push({name:product.name,managedId:product.id,size,sizes:size?[size]:[],price:Number(product.price),quantity:1});
  renderCart();dialog?.showModal();
  if(toast){toast.textContent='ARTÍCULO AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
 }
@@ -181,7 +185,7 @@ function render(){
   const remove=document.createElement('button');remove.type='button';remove.textContent='ELIMINAR';
   remove.addEventListener('click',async()=>{if(!confirm('¿Eliminar '+product.name+' de este catálogo local?'))return;products=products.filter(item=>item.id!==product.id);await deletePhoto(product.photoId);save();render();statusLine.textContent='Artículo eliminado de este navegador.'});
   actions.append(edit,remove);row.append(info,actions);list.append(row);
-  const card=document.createElement('article');card.className='product-card managed-product';card.dataset.category=product.category;card.dataset.managed='true';
+  const card=document.createElement('article');card.className='product-card managed-product';card.dataset.category=product.category;card.dataset.managed='true';card.dataset.productId=product.id;
   const visual=document.createElement('div');visual.className='product-art art-managed';
   const img=document.createElement('img');img.alt=product.name;img.loading='lazy';
   if(product.image)img.src=product.image;else if(product.photoId)getPhoto(product.photoId).then(blob=>{if(blob)img.src=URL.createObjectURL(blob)});
@@ -196,7 +200,19 @@ function render(){
   add.addEventListener('click',()=>addProductToBag(product,add));
   card.append(visual,data,add);grid?.append(card);
  });
+ syncManagedStock();
 }
+syncManagedStock=()=>{
+ grid?.querySelectorAll('[data-managed="true"]').forEach(card=>{
+  const product=products.find(item=>item.id===card.dataset.productId);
+  if(!product)return;
+  const inBag=cart.filter(item=>item.managedId===product.id).reduce((sum,item)=>sum+(Number(item.quantity)||1),0);
+  const remaining=Math.max(0,(Number(product.stock)||0)-inBag);
+  const button=card.querySelector('.add-button');
+  if(button){button.disabled=remaining===0;button.textContent=remaining===0?'SIN EXISTENCIAS':'AÑADIR A LA BOLSA +';}
+ });
+};
+
 form.addEventListener('submit',async event=>{
  event.preventDefault();const editId=document.querySelector('#edit-id').value,previous=products.find(item=>item.id===editId);
  const category=document.querySelector('#product-category').value,price=Number(document.querySelector('#product-price').value),stock=Number(document.querySelector('#product-stock').value);
