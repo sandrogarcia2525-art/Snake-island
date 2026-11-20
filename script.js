@@ -263,6 +263,21 @@ form.addEventListener('submit',async event=>{
  finally{document.querySelector('#save-product').disabled=false}
 });
 document.querySelector('#cancel-edit')?.addEventListener('click',reset);
+document.querySelector('#set-all-stock')?.addEventListener('click',async()=>{
+ if(!products.length){setStatus('No hay artículos en el catálogo compartido para actualizar.');return}
+ if(!confirm('Esto establecerá exactamente 1,000 existencias para CADA artículo del catálogo actual. Los valores de stock anteriores serán reemplazados. ¿Deseas continuar?'))return;
+ const button=document.querySelector('#set-all-stock');button.disabled=true;
+ const previous=products.map(product=>({id:product.id,stock:product.stock}));
+ try{
+  products=products.map(product=>({...product,stock:1000}));
+  await saveRemote();
+  setStatus('Configuración guardada: '+products.length+' artículos con 1,000 existencias cada uno. Total registrado: '+(products.length*1000).toLocaleString('es-MX')+' unidades.');
+ }catch(error){
+  products=products.map(product=>{const old=previous.find(item=>item.id===product.id);return old?{...product,stock:old.stock}:product});
+  setStatus(error.message||'No se pudieron actualizar las existencias.');
+  render();
+ }finally{button.disabled=false}
+});
 document.querySelector('#export-products')?.addEventListener('click',()=>{const blob=new Blob([JSON.stringify(products,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='snake-island-catalogo.json';a.click();URL.revokeObjectURL(url);setStatus('Respaldo del catálogo descargado.')});
 document.querySelector('#import-products')?.addEventListener('change',async event=>{
  const file=event.target.files?.[0];if(!file)return;
