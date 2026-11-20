@@ -32,7 +32,7 @@ const toast=document.querySelector('#toast');
 const total=document.querySelector('#cart-total');
 let toastTimer;
 function renderCart(){
-  if(count)count.textContent=String(cart.reduce((sum,item)=>sum+(Number(item.quantity)||1),0));
+  if(count)count.textContent=String(cart.reduce((sum,item)=>sum+(Number(item.quantity)||1)*(item.packageUnits||1),0));
   if(list){
     list.replaceChildren();
     cart.forEach((entry,index)=>{
@@ -42,11 +42,11 @@ function renderCart(){
       const title=document.createElement('strong');
       const unitPrice=itemPrice(entry);
       title.textContent=entry.name+(entry.sizes?.length?' / TALLAS '+entry.sizes.join(', '):(entry.size?' / TALLA '+entry.size:''));
-      const lineTotal=document.createElement('span');lineTotal.textContent=unitPrice===null?'PRECIO POR CONFIRMAR':money(unitPrice*(Number(entry.quantity)||1))+' · '+money(unitPrice)+' c/u';
+      const lineTotal=document.createElement('span');lineTotal.textContent=unitPrice===null?'PRECIO POR CONFIRMAR':money(unitPrice*(Number(entry.quantity)||1))+(entry.packageUnits?' · '+entry.packageUnits+' piezas por paquete':' · '+money(unitPrice)+' c/u');
       details.append(title,lineTotal);
       const controls=document.createElement('div');controls.className='cart-quantity';
       const minus=document.createElement('button');minus.type='button';minus.textContent='−';minus.setAttribute('aria-label','Restar una unidad de '+entry.name);
-      const qty=document.createElement('output');qty.textContent=String(entry.quantity||1);
+      const qty=document.createElement('output');qty.textContent=entry.packageUnits?String(entry.quantity||1)+' paquete(s)':String(entry.quantity||1);
       const plus=document.createElement('button');plus.type='button';plus.textContent='+';plus.setAttribute('aria-label','Sumar una unidad de '+entry.name);
       const remove=document.createElement('button');remove.type='button';remove.className='cart-remove';remove.textContent='QUITAR';
       minus.disabled=(entry.quantity||1)<=(entry.minQuantity||1);
@@ -96,10 +96,10 @@ document.querySelectorAll('.product-card .inquiry-button').forEach(original=>{
   const raw=card.querySelector('.product-info strong')?.textContent||'';
   const match=raw.match(/\$\s*([\d,]+)\s*MXN/i);
   const price=match?Number(match[1].replace(/,/g,'')):null;
-  const minQuantity=/NENA/i.test(name)?3:1;
+  const isNena=/NENA/i.test(name);const packageUnits=isNena?3:1;
   const existing=cart.find(item=>item.staticCatalog&&item.name===name);
   if(existing)existing.quantity++;
-  else cart.push({staticCatalog:true,name,price,quantity:minQuantity,minQuantity,stock:null});
+  else cart.push({staticCatalog:true,name,price,quantity:1,minQuantity:1,packageUnits,stock:null});
   renderCart();dialog?.showModal();
   if(toast){toast.textContent='ARTÍCULO AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
  });
@@ -116,7 +116,7 @@ cardPay?.addEventListener('click',async()=>{
 });
 document.querySelector('#pay-cash')?.addEventListener('click',()=>{
   if(!cart.length){alert('Agrega primero un artículo a tu bolsa.');return}
-  const lines=cart.map(item=>'- '+item.name+' × '+(Number(item.quantity)||1)+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+(itemPrice(item)===null?'PRECIO POR CONFIRMAR':money(itemPrice(item)*(Number(item.quantity)||1))));
+  const lines=cart.map(item=>'- '+item.name+' × '+(Number(item.quantity)||1)+(item.packageUnits?' paquete(s) de '+item.packageUnits+' piezas':'')+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+(itemPrice(item)===null?'PRECIO POR CONFIRMAR':money(itemPrice(item)*(Number(item.quantity)||1))));
   const amount=cart.reduce((sum,item)=>sum+(itemPrice(item)??0)*(Number(item.quantity)||1),0);
   const pending=cart.some(item=>itemPrice(item)===null);
   const message='Hola, quiero consultar este pedido de Snake Island × Blue Worlds:\n'+lines.join('\n')+'\nSubtotal de precios publicados: '+money(amount)+(pending?'\nHay artículos cuyo precio debe confirmarse.':'')+'\nConfirmen existencias, tallas, zona y costo de envío, y si es posible pagar en efectivo. Este mensaje es solo una consulta; aún no confirmo el pedido.';
@@ -125,7 +125,7 @@ document.querySelector('#pay-cash')?.addEventListener('click',()=>{
 
 document.querySelector('#pay-transfer')?.addEventListener('click',()=>{
   if(!cart.length){alert('Agrega primero un artículo a tu bolsa.');return}
-  const lines=cart.map(item=>'- '+item.name+' × '+(Number(item.quantity)||1)+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+(itemPrice(item)===null?'PRECIO POR CONFIRMAR':money(itemPrice(item)*(Number(item.quantity)||1))));
+  const lines=cart.map(item=>'- '+item.name+' × '+(Number(item.quantity)||1)+(item.packageUnits?' paquete(s) de '+item.packageUnits+' piezas':'')+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+(itemPrice(item)===null?'PRECIO POR CONFIRMAR':money(itemPrice(item)*(Number(item.quantity)||1))));
   const amount=cart.reduce((sum,item)=>sum+(itemPrice(item)??0)*(Number(item.quantity)||1),0);
   const pending=cart.some(item=>itemPrice(item)===null);
   const message='Hola, quiero solicitar los datos oficiales para pagar por transferencia o depósito mi pedido de Snake Island × Blue Worlds:\n'+lines.join('\n')+'\nSubtotal de precios publicados: '+money(amount)+(pending?'\nHay artículos cuyo precio debe confirmarse.':'')+'\nPor favor envíenme los datos bancarios, titular y referencia. No realizaré el depósito hasta confirmar precios, existencias y que los datos corresponden a Snake Island.';
