@@ -32,6 +32,7 @@ function addUnifiedCartItem({productId=null,name,size='',sizes=[],price=null,sto
  if(existing){
   if(maxPackages!==null&&existing.quantity>=maxPackages){alert('No hay más existencias disponibles para sumar.');return}
   existing.quantity++;
+  if(sizes.length)existing.sizes.push(...sizes);
  }else{
   cart.push({productId,name,size,sizes:[...sizes],price:price!==null&&price!==undefined&&price!==''&&Number.isFinite(Number(price))?Number(price):null,quantity:1,stock:maxPackages,packageUnits:Math.max(1,Number(packageUnits)||1),unitsPerPackage:Math.max(1,Number(packageUnits)||1)});
  }
