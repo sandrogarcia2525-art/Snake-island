@@ -49,7 +49,7 @@ function renderCart(){
       const plus=document.createElement('button');plus.type='button';plus.textContent='+';plus.setAttribute('aria-label','Sumar una unidad de '+entry.name);
       const remove=document.createElement('button');remove.type='button';remove.className='cart-remove';remove.textContent='QUITAR';
       minus.disabled=(entry.quantity||1)<=1;
-      plus.disabled=Number.isFinite(entry.stock)&&(entry.quantity||1)>=entry.stock;
+      plus.disabled=Number.isFinite(entry.stock)&&entry.stock>0&&(entry.quantity||1)>=entry.stock;
       minus.addEventListener('click',()=>{if(entry.quantity>1){entry.quantity--;if(entry.unitsPerPackage&&entry.sizes?.length)entry.sizes=entry.sizes.slice(0,-entry.unitsPerPackage);renderCart()}});
       plus.addEventListener('click',()=>{if(Number.isFinite(entry.stock)&&(entry.quantity||1)>=entry.stock)return;entry.quantity=(entry.quantity||1)+1;if(entry.unitsPerPackage&&entry.sizes?.length)entry.sizes.push(...entry.sizes.slice(0,entry.unitsPerPackage));renderCart()});
       remove.addEventListener('click',()=>{cart.splice(index,1);renderCart()});
@@ -98,16 +98,16 @@ cardPay?.addEventListener('click',async()=>{
 document.querySelector('#pay-cash')?.addEventListener('click',()=>{
   if(!cart.length){alert('Agrega primero un artículo a tu bolsa.');return}
   if(cart.some(item=>!Number.isFinite(item.price)&&prices[item.name]===undefined)){alert('El catálogo aún no tiene precios verificados.');return}
-  const lines=cart.map(item=>'- '+item.name+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+money(Number.isFinite(item.price)?item.price:prices[item.name]));
-  const amount=cart.reduce((sum,item)=>sum+(Number.isFinite(item.price)?item.price:prices[item.name]),0);
+  const lines=cart.map(item=>'- '+item.name+' × '+(Number(item.quantity)||1)+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+money((Number.isFinite(item.price)?item.price:prices[item.name])*(Number(item.quantity)||1)));
+  const amount=cart.reduce((sum,item)=>sum+(Number.isFinite(item.price)?item.price:prices[item.name])*(Number(item.quantity)||1),0);
   const message='Hola, quiero consultar este pedido de Snake Island × Blue Worlds:\n'+lines.join('\n')+'\nTotal de productos: '+money(amount)+'\nConfirmen existencias, tallas, zona y costo de envío, y si es posible pagar en efectivo. Este mensaje es solo una consulta; aún no confirmo el pedido.';
   window.open('https://wa.me/'+orderPhone+'?text='+encodeURIComponent(message),'_blank','noopener');
 });
 
 document.querySelector('#pay-transfer')?.addEventListener('click',()=>{
   if(!cart.length){alert('Agrega primero un artículo a tu bolsa.');return}
-  const lines=cart.map(item=>'- '+item.name+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+money(Number.isFinite(item.price)?item.price:(prices[item.name]??0)));
-  const amount=cart.reduce((sum,item)=>sum+(Number.isFinite(item.price)?item.price:(prices[item.name]??0)),0);
+  const lines=cart.map(item=>'- '+item.name+' × '+(Number(item.quantity)||1)+(item.sizes?.length?' / tallas '+item.sizes.join(', '):(item.size?' / talla '+item.size:''))+' — '+money((Number.isFinite(item.price)?item.price:(prices[item.name]??0))*(Number(item.quantity)||1)));
+  const amount=cart.reduce((sum,item)=>sum+(Number.isFinite(item.price)?item.price:(prices[item.name]??0))*(Number(item.quantity)||1),0);
   const message='Hola, quiero solicitar los datos oficiales para pagar por transferencia o depósito mi pedido de Snake Island × Blue Worlds:\n'+lines.join('\n')+'\nTotal de productos: '+money(amount)+'\nPor favor envíenme los datos bancarios, titular y referencia. No realizaré el depósito hasta confirmar que los datos corresponden a Snake Island.';
   window.open('https://wa.me/'+orderPhone+'?text='+encodeURIComponent(message),'_blank','noopener');
 });
@@ -156,6 +156,7 @@ async function saveRemote(){
  renderPublicCards();
 }
 function addProductToBag(product){
+ if(!Number.isFinite(Number(product.stock))||Number(product.stock)<=0){alert('Este artículo no tiene existencias registradas. Consulta disponibilidad con el equipo.');return}
  let size='';
  if(product.category==='wear'){
   size=(window.prompt('Elige talla: chica, mediana o grande','mediana')||'').trim().toLowerCase();
