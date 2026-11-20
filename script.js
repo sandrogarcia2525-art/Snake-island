@@ -25,7 +25,7 @@ const orderPhone='524181516612';
 const money=value=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0}).format(value);
 const itemPrice=item=>Number.isFinite(item.price)?item.price:(prices[item.name]??null);
 function addUnifiedCartItem({productId=null,name,size='',sizes=[],price=null,stock=null,packageUnits=1}){
- const key=productId||'static:'+name;
+ const key=productId?(productId+':'+name):'static:'+name;
  const existing=cart.find(item=>(item.productId||('static:'+item.name))===key&&item.size===size&&Number(item.packageUnits||1)===Number(packageUnits||1));
  const maxPackages=stock!==null&&stock!==undefined&&stock!==''&&Number.isFinite(Number(stock))?Math.floor(Number(stock)/Math.max(1,Number(packageUnits)||1)):null;
  if(maxPackages!==null&&maxPackages<=0){alert('No hay existencias suficientes para esta presentación. Consulta disponibilidad con el equipo.');return}
@@ -227,8 +227,23 @@ function renderPublicCards(){
   wrap.append(small,title);info.append(wrap,price);
   if(product.description){const desc=document.createElement('p');desc.className='product-price-detail';desc.textContent=product.description;card.append(visual,info,desc)}else card.append(visual,info);
   const stock=document.createElement('small');stock.className='managed-stock';stock.textContent=Number(product.stock)>0?'DISPONIBLES: '+Number(product.stock):'CONSULTAR EXISTENCIAS';
-  const add=document.createElement('button');add.className='add-button';add.type='button';add.textContent='AÑADIR A LA BOLSA +';add.addEventListener('click',()=>addProductToBag(product,add));
-  card.append(stock,add);grid?.append(card);
+  const cleanName=String(product.name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  let variants=[{name:product.name,price:Number(product.price),units:1,label:'AÑADIR 1 PIEZA'}];
+  if(/^pepe$/.test(cleanName))variants=[{name:'PEPE · OPCIÓN 1 · 1 g',price:1000,units:1,label:'OPCIÓN 1 · 1 g · $1,000 MXN'},{name:'PEPE · OPCIÓN 2 · 1/2 g',price:650,units:1,label:'OPCIÓN 2 · 1/2 g · $650 MXN'}];
+  else if(/^dounots/.test(cleanName))variants=[{name:'DOUNOTS · 1 PIEZA',price:700,units:1,label:'1 PIEZA · $700 MXN'},{name:'DOUNOTS · 3 PIEZAS',price:1650,units:3,label:'3 PIEZAS · $1,650 MXN'},{name:'DOUNOTS · 4 PIEZAS',price:2000,units:4,label:'4 PIEZAS · $2,000 MXN'},{name:'DOUNOTS · 5 PIEZAS',price:2300,units:5,label:'5 PIEZAS · $2,300 MXN'}];
+  else if(/^nena/.test(cleanName))variants=[{name:'NENA · PAQUETE 3 PIEZAS',price:250,units:3,label:'PAQUETE 3 PIEZAS · $250 MXN'}];
+  else if(/^plumas?$/.test(cleanName))variants=[{name:'PLUMA · 1 PIEZA',price:650,units:1,label:'1 PIEZA · $650 MXN'}];
+  else if(/^dona/.test(cleanName))variants=[{name:'DONA · PAQUETE 50 PIEZAS',price:15000,units:50,label:'PAQUETE 50 PIEZAS · $15,000 MXN'}];
+  else if(/^estampilla green/.test(cleanName))variants=[{name:'ESTAMPILLA GREEN · 1 PIEZA',price:25,units:1,label:'1 PIEZA · $25 MXN'}];
+  variants.forEach(variant=>{
+   const add=document.createElement('button');add.className='add-button';add.type='button';add.textContent=variant.label+' +';
+   add.addEventListener('click',()=>{
+    if(!Number.isFinite(Number(product.stock))||Number(product.stock)<=0){alert('Este artículo no tiene existencias registradas. Consulta disponibilidad con el equipo.');return}
+    addUnifiedCartItem({productId:product.id,name:variant.name,price:variant.price,stock:Number(product.stock),packageUnits:variant.units});
+   });
+   card.append(add);
+  });
+  card.append(stock);grid?.append(card);
  });
 }
 function render(){
