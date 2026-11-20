@@ -94,7 +94,7 @@ document.querySelectorAll('.product-card').forEach(card=>{
  const heading=card.querySelector('.product-info h3')?.textContent?.trim()||'Artículo de catálogo';
  const isPepe=/^PEPE$/i.test(heading);
  const variants=isPepe
-  ? [{name:'PEPE · OPCIÓN 1',price:1000,label:'AÑADIR OPCIÓN 1 · $1,000 MXN'},{name:'PEPE · OPCIÓN 2',price:650,label:'AÑADIR OPCIÓN 2 · $650 MXN'}]
+  ? [{name:'PEPE · OPCIÓN 1 · 1 g',price:1000,label:'AÑADIR OPCIÓN 1 · 1 g · $1,000 MXN'},{name:'PEPE · OPCIÓN 2 · 1/2 g',price:650,label:'AÑADIR OPCIÓN 2 · 1/2 g · $650 MXN'}]
   : [{name:heading,price:null,label:'AÑADIR A LA BOLSA +'}];
  if(isPepe){
   const original=inquiries[0];
