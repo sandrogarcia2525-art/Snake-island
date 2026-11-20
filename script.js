@@ -155,7 +155,7 @@ function addProductToBag(product){
 }
 function renderPublicCards(){
  grid?.querySelectorAll('[data-managed="true"]').forEach(card=>card.remove());
- const normalizeName=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(pack|paquete)\b/g,'').replace(/\b\d+\s*(pz|pza|pzas|pieza|piezas)\b/g,'').replace(/[^a-z0-9]/g,'').replace(/s$/,'');
+ const normalizeName=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(pack|paquete)\b/g,'').replace(/\b\d+\s*(pz|pza|pzas|pieza|piezas)\b/g,'').replace(/\b\d+\b/g,'').replace(/[^a-z0-9]/g,'').replace(/s$/,'');
  products.forEach(product=>{
   const key=normalizeName(product.name);
   grid?.querySelectorAll('.product-card:not([data-managed="true"])').forEach(existing=>{
@@ -255,7 +255,7 @@ document.querySelector('#import-products')?.addEventListener('change',async even
   const imported=JSON.parse(await file.text());
   if(!Array.isArray(imported)||imported.length>200||imported.some(p=>!p||!p.name||!Object.hasOwn(labels,p.category)||!Number.isFinite(Number(p.price))||Number(p.price)<0||!Number.isInteger(Number(p.stock||0))||Number(p.stock||0)<0))throw new Error('Formato de catálogo no válido.');
   const merged=[...products];
-  const normalizeName=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(pack|paquete)\b/g,'').replace(/\b\d+\s*(pz|pza|pzas|pieza|piezas)\b/g,'').replace(/\b\d+\s*piezas?\b/g,'').replace(/[^a-z0-9]/g,'').replace(/s$/,'');
+  const normalizeName=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(pack|paquete)\b/g,'').replace(/\b\d+\s*(pz|pza|pzas|pieza|piezas)\b/g,'').replace(/\b\d+\s*piezas?\b/g,'').replace(/\b\d+\b/g,'').replace(/[^a-z0-9]/g,'').replace(/s$/,'');
   let added=0,updated=0;
   for(const p of imported){
    let image=safe(p.image);
