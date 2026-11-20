@@ -97,7 +97,17 @@ document.querySelectorAll('.product-card').forEach(card=>{
  const variants=isPepe
   ? [{name:'PEPE · OPCIÓN 1 · 1 g',price:1000,label:'AÑADIR OPCIÓN 1 · 1 g · $1,000 MXN',units:1},{name:'PEPE · OPCIÓN 2 · 1/2 g',price:650,label:'AÑADIR OPCIÓN 2 · 1/2 g · $650 MXN',units:1}]
   : isDounots
-  ? [{name:'DOUNOTS · 1 PIEZA',price:700,label:'1 PIEZA · $700 MXN',units:1},{name:'DOUNOTS · 3 PIEZAS',price:1650,label:'3 PIEZAS · $1,650 MXN',units:3},{name:'DOUNOTS · 4 PIEZAS',price:2000,label:'4 PIEZAS · $2,000 MXN',units:4},{name:'DOUNOTS · 5 PIEZAS',price:2300,label:'5 PIEZAS · $2,300 MXN',units:5}]
+  ? [{name:'DOUNOTS · 1 PIEZA',price:700,label:'AÑADIR 1 PIEZA · $700 MXN',units:1},{name:'DOUNOTS · 3 PIEZAS',price:1650,label:'AÑADIR 3 PIEZAS · $1,650 MXN',units:3},{name:'DOUNOTS · 4 PIEZAS',price:2000,label:'AÑADIR 4 PIEZAS · $2,000 MXN',units:4},{name:'DOUNOTS · 5 PIEZAS',price:2300,label:'AÑADIR 5 PIEZAS · $2,300 MXN',units:5}]
+  : /^NENA/i.test(heading)
+  ? [{name:'NENA · PAQUETE 3 PIEZAS',price:250,label:'AÑADIR PAQUETE 3 PIEZAS · $250 MXN',units:3}]
+  : /^PLUMA/i.test(heading)
+  ? [{name:'PLUMA · 1 PIEZA',price:650,label:'AÑADIR 1 PIEZA · $650 MXN',units:1}]
+  : /^DONA/i.test(heading)
+  ? [{name:'DONA · PAQUETE 50 PIEZAS',price:15000,label:'AÑADIR PAQUETE 50 PIEZAS · $15,000 MXN',units:50}]
+  : /^ESTAMPILLA GREEN/i.test(heading)
+  ? [{name:'ESTAMPILLA GREEN · 1 PIEZA',price:25,label:'AÑADIR 1 PIEZA · $25 MXN',units:1}]
+  : /^PACA GREEN MERCH/i.test(heading)
+  ? [{name:'PACA GREEN MERCH · 1 PACA',price:7500,label:'AÑADIR 1 PACA · $7,500 MXN',units:1}]
   : [{name:heading,price:null,label:'AÑADIR A LA BOLSA +',units:1}];
  const original=inquiries[0];
  variants.forEach(variant=>{
