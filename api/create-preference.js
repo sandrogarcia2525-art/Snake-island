@@ -30,10 +30,10 @@ module.exports = async function handler(req, res) {
   for (const item of items) {
     const product = catalog[item && item.name];
     const quantity = Number(item && item.quantity);
-    if (!product || !Number.isFinite(product.price) || product.price <= 0 || quantity !== 1) {
+    if (!product || !Number.isFinite(product.price) || product.price <= 0 || !Number.isInteger(quantity) || quantity < 1 || quantity > 99) {
       return res.status(400).json({ error: "Uno de los artículos no está disponible para pago en línea." });
     }
-    if (product.category === "wear" && (!Array.isArray(item.sizes) || item.sizes.length !== product.units || item.sizes.some(size => !sizes.has(size)))) {
+    if (product.category === "wear" && (!Array.isArray(item.sizes) || item.sizes.length !== product.units * quantity || item.sizes.some(size => !sizes.has(size)))) {
       return res.status(400).json({ error: "Indica las tallas requeridas: chica, mediana o grande." });
     }
     preferenceItems.push({
