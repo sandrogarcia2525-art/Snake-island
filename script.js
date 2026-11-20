@@ -24,6 +24,20 @@ const orderPhone='524181516612';
 
 const money=value=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0}).format(value);
 const itemPrice=item=>Number.isFinite(item.price)?item.price:(prices[item.name]??null);
+function addUnifiedCartItem({productId=null,name,size='',sizes=[],price=null,stock=null,packageUnits=1}){
+ const key=productId||'static:'+name;
+ const existing=cart.find(item=>(item.productId||('static:'+item.name))===key&&item.size===size&&Number(item.packageUnits||1)===Number(packageUnits||1));
+ const maxPackages=stock!==null&&stock!==undefined&&stock!==''&&Number.isFinite(Number(stock))?Math.floor(Number(stock)/Math.max(1,Number(packageUnits)||1)):null;
+ if(maxPackages!==null&&maxPackages<=0){alert('No hay existencias suficientes para esta presentación. Consulta disponibilidad con el equipo.');return}
+ if(existing){
+  if(maxPackages!==null&&existing.quantity>=maxPackages){alert('No hay más existencias disponibles para sumar.');return}
+  existing.quantity++;
+ }else{
+  cart.push({productId,name,size,sizes:[...sizes],price:price!==null&&price!==undefined&&price!==''&&Number.isFinite(Number(price))?Number(price):null,quantity:1,stock:maxPackages,packageUnits:Math.max(1,Number(packageUnits)||1),unitsPerPackage:Math.max(1,Number(packageUnits)||1)});
+ }
+ renderCart();dialog?.showModal();
+ if(toast){toast.textContent='ARTÍCULO AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
+}
 const count=document.querySelector('#bag-count');
 const dialog=document.querySelector('#cart-dialog');
 const list=document.querySelector('#cart-items');
@@ -74,11 +88,7 @@ function addCatalogItem(name){
     sizes=raw.split(',').map(value=>value.trim().toLowerCase()).filter(Boolean);
     if(sizes.length!==info.units||sizes.some(value=>!['chica','mediana','grande'].includes(value))){alert('Debes indicar exactamente '+info.units+' talla(s): chica, mediana o grande.');return}
   }
-  const existing=cart.find(item=>item.name===name&&(item.sizes||[]).join('|')===sizes.join('|'));
-  if(existing){existing.quantity=(existing.quantity||1)+1;if(info.units>1)existing.sizes.push(...sizes)}
-  else cart.push({name,size:sizes[0]||'',sizes:[...sizes],price:info.price,quantity:1,unitsPerPackage:info.units});
-  renderCart();dialog?.showModal();
-  if(toast){toast.textContent='ARTÍCULO AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
+  addUnifiedCartItem({name,size:sizes.join('|'),sizes,price:info.price,packageUnits:info.units});
 }
 document.querySelectorAll('.add-button[data-product]').forEach(button=>button.addEventListener('click',()=>addCatalogItem(button.dataset.product)));
 document.querySelectorAll('.inquiry-button').forEach(button=>button.addEventListener('click',()=>{
@@ -188,20 +198,7 @@ async function saveRemote(){
  if(!r.ok)throw new Error(d.error||'No se pudo guardar el catálogo.');
  renderPublicCards();
 }
-function addUnifiedCartItem({productId=null,name,size='',sizes=[],price=null,stock=null,packageUnits=1}){
- const key=productId||'static:'+name;
- const existing=cart.find(item=>(item.productId||('static:'+item.name))===key&&item.size===size&&Number(item.packageUnits||1)===Number(packageUnits||1));
- const maxPackages=stock!==null&&stock!==undefined&&stock!==''&&Number.isFinite(Number(stock))?Math.floor(Number(stock)/Math.max(1,Number(packageUnits)||1)):null;
- if(maxPackages!==null&&maxPackages<=0){alert('No hay existencias suficientes para esta presentación. Consulta disponibilidad con el equipo.');return}
- if(existing){
-  if(maxPackages!==null&&existing.quantity>=maxPackages){alert('No hay más existencias disponibles para sumar.');return}
-  existing.quantity++;
- }else{
-  cart.push({productId,name,size,sizes:[...sizes],price:price!==null&&price!==undefined&&price!==''&&Number.isFinite(Number(price))?Number(price):null,quantity:1,stock:maxPackages,packageUnits:Math.max(1,Number(packageUnits)||1)});
- }
- renderCart();dialog?.showModal();
- if(toast){toast.textContent='ARTÍCULO AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
-}
+
 function addProductToBag(product){
  if(!Number.isFinite(Number(product.stock))||Number(product.stock)<=0){alert('Este artículo no tiene existencias registradas. Consulta disponibilidad con el equipo.');return}
  let size='';
