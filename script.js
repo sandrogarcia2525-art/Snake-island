@@ -93,27 +93,18 @@ document.querySelectorAll('.product-card').forEach(card=>{
  if(!inquiries.length)return;
  const heading=card.querySelector('.product-info h3')?.textContent?.trim()||'Artículo de catálogo';
  const isPepe=/^PEPE$/i.test(heading);
+ const isDounots=/^DOUNOTS$/i.test(heading);
  const variants=isPepe
-  ? [{name:'PEPE · OPCIÓN 1 · 1 g',price:1000,label:'AÑADIR OPCIÓN 1 · 1 g · $1,000 MXN'},{name:'PEPE · OPCIÓN 2 · 1/2 g',price:650,label:'AÑADIR OPCIÓN 2 · 1/2 g · $650 MXN'}]
-  : [{name:heading,price:null,label:'AÑADIR A LA BOLSA +'}];
- if(isPepe){
-  const original=inquiries[0];
-  variants.forEach(variant=>{
-   const add=document.createElement('button');add.type='button';add.className='add-button catalog-bag-add';add.textContent=variant.label;
-   original.insertAdjacentElement('beforebegin',add);
-   add.addEventListener('click',()=>addStaticCatalogItem(variant, /NENA/i.test(heading)?3:1));
-  });
- }else{
-  const original=inquiries[0];
-  const raw=card.querySelector('.product-info strong')?.textContent||'';
-  const match=raw.match(/\$\s*([\d,]+)\s*MXN/i);
-  variants[0].price=match?Number(match[1].replace(/,/g,'')):null;
-  const add=document.createElement('button');add.type='button';add.className='add-button catalog-bag-add';add.textContent=variants[0].label;
+  ? [{name:'PEPE · OPCIÓN 1 · 1 g',price:1000,label:'AÑADIR OPCIÓN 1 · 1 g · $1,000 MXN',units:1},{name:'PEPE · OPCIÓN 2 · 1/2 g',price:650,label:'AÑADIR OPCIÓN 2 · 1/2 g · $650 MXN',units:1}]
+  : isDounots
+  ? [{name:'DOUNOTS · 1 PIEZA',price:700,label:'1 PIEZA · $700 MXN',units:1},{name:'DOUNOTS · 3 PIEZAS',price:1650,label:'3 PIEZAS · $1,650 MXN',units:3},{name:'DOUNOTS · 4 PIEZAS',price:2000,label:'4 PIEZAS · $2,000 MXN',units:4},{name:'DOUNOTS · 5 PIEZAS',price:2300,label:'5 PIEZAS · $2,300 MXN',units:5}]
+  : [{name:heading,price:null,label:'AÑADIR A LA BOLSA +',units:1}];
+ const original=inquiries[0];
+ variants.forEach(variant=>{
+  const add=document.createElement('button');add.type='button';add.className='add-button catalog-bag-add';add.textContent=isDounots||isPepe?variant.label:'AÑADIR A LA BOLSA +';
   original.insertAdjacentElement('beforebegin',add);
-  add.addEventListener('click',()=>addStaticCatalogItem(variants[0],/NENA/i.test(heading)?3:1));
- }
-});
-function addStaticCatalogItem(variant,packageUnits=1){
+  add.addEventListener('click',()=>addStaticCatalogItem(variant,variant.units||1));
+ });function addStaticCatalogItem(variant,packageUnits=1){
  const existing=cart.find(item=>item.staticCatalog&&item.name===variant.name);
  if(existing)existing.quantity++;
  else cart.push({staticCatalog:true,name:variant.name,price:variant.price,quantity:1,minQuantity:1,packageUnits,stock:null});
