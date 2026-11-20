@@ -155,7 +155,13 @@ function addProductToBag(product){
 }
 function renderPublicCards(){
  grid?.querySelectorAll('[data-managed="true"]').forEach(card=>card.remove());
+ const normalizeName=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(pack|paquete)\b/g,'').replace(/\b\d+\s*(pz|pza|pzas|pieza|piezas)\b/g,'').replace(/[^a-z0-9]/g,'').replace(/s$/,'');
  products.forEach(product=>{
+  const key=normalizeName(product.name);
+  grid?.querySelectorAll('.product-card:not([data-managed="true"])').forEach(existing=>{
+   const title=existing.querySelector('.product-info h3')?.textContent||'';
+   if(normalizeName(title)===key)existing.remove();
+  });
   const card=document.createElement('article');card.className='product-card managed-product';card.dataset.category=product.category;card.dataset.managed='true';
   const visual=document.createElement('div');visual.className='product-art art-managed';
   if(product.image){const img=document.createElement('img');img.src=product.image;img.alt=product.name;img.loading='lazy';visual.append(img)}
@@ -198,9 +204,30 @@ function render(){
 }
 function reset(){form.reset();document.querySelector('#edit-id').value='';document.querySelector('#save-product').textContent='GUARDAR ARTÍCULO ↗';selectedPhoto=null;photoPreview.hidden=true;photoPreview.removeAttribute('src')}
 function readFile(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})}
+async function optimizePhoto(file){
+ if(file.size<=2.5*1024*1024)return file;
+ if(typeof createImageBitmap!=='function')throw new Error('Esta fotografía supera 2.5 MB. Reduce su tamaño y vuelve a intentarlo.');
+ const bitmap=await createImageBitmap(file);
+ const canvas=document.createElement('canvas');
+ let scale=Math.min(1,Math.sqrt((2.35*1024*1024)/file.size));
+ let blob=null;
+ for(let attempt=0;attempt<7;attempt++){
+  canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+  canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+  const context=canvas.getContext('2d');
+  context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);
+  context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+  blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',Math.max(.58,.84-attempt*.04)));
+  if(blob&&blob.size<=2.5*1024*1024)break;
+  scale*=.82;
+ }
+ bitmap.close?.();
+ if(!blob||blob.size>2.5*1024*1024)throw new Error('No se pudo optimizar la fotografía. Usa una imagen más ligera.');
+ return new File([blob],(file.name||'catalogo').replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg'});
+}
 async function uploadPhoto(file){
- if(file.size>3*1024*1024)throw new Error('La fotografía debe pesar máximo 3 MB.');
- const dataUrl=await readFile(file);
+ const optimized=await optimizePhoto(file);
+ const dataUrl=await readFile(optimized);
  const r=await fetch('/api/admin-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dataUrl})});
  const d=await r.json();if(!r.ok)throw new Error(d.error||'No se pudo subir la fotografía.');
  return d.url;
@@ -222,7 +249,34 @@ form.addEventListener('submit',async event=>{
 });
 document.querySelector('#cancel-edit')?.addEventListener('click',reset);
 document.querySelector('#export-products')?.addEventListener('click',()=>{const blob=new Blob([JSON.stringify(products,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='snake-island-catalogo.json';a.click();URL.revokeObjectURL(url);setStatus('Respaldo del catálogo descargado.')});
-document.querySelector('#import-products')?.addEventListener('change',async event=>{const file=event.target.files?.[0];if(!file)return;try{const imported=JSON.parse(await file.text());if(!Array.isArray(imported)||imported.length>200||imported.some(p=>!p.name||!Object.hasOwn(labels,p.category)||!Number.isFinite(Number(p.price))))throw new Error('Formato de catálogo no válido.');const restored=[];for(const p of imported){let image=safe(p.image);if(p.photoData&&String(p.photoData).startsWith('data:image/')){const photoBlob=await (await fetch(p.photoData)).blob();const file=new File([photoBlob],'catalog-image',{type:photoBlob.type||'image/jpeg'});image=await uploadPhoto(file)}restored.push({id:safe(p.id)||crypto.randomUUID(),name:safe(p.name),category:p.category,image,description:safe(p.description),price:Number(p.price),stock:Number(p.stock||0)})}products=restored;await saveRemote();setStatus('Catálogo importado y publicado.');}catch(e){setStatus(e.message||'No se pudo importar.')}event.target.value=''});
+document.querySelector('#import-products')?.addEventListener('change',async event=>{
+ const file=event.target.files?.[0];if(!file)return;
+ try{
+  const imported=JSON.parse(await file.text());
+  if(!Array.isArray(imported)||imported.length>200||imported.some(p=>!p||!p.name||!Object.hasOwn(labels,p.category)||!Number.isFinite(Number(p.price))||Number(p.price)<0||!Number.isInteger(Number(p.stock||0))||Number(p.stock||0)<0))throw new Error('Formato de catálogo no válido.');
+  const merged=[...products];
+  const normalizeName=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(pack|paquete)\b/g,'').replace(/\b\d+\s*(pz|pza|pzas|pieza|piezas)\b/g,'').replace(/\b\d+\s*piezas?\b/g,'').replace(/[^a-z0-9]/g,'').replace(/s$/,'');
+  let added=0,updated=0;
+  for(const p of imported){
+   let image=safe(p.image);
+   if(p.photoData&&String(p.photoData).startsWith('data:image/')){
+    const photoBlob=await (await fetch(p.photoData)).blob();
+    const fileImage=new File([photoBlob],'catalog-image',{type:photoBlob.type||'image/jpeg'});
+    image=await uploadPhoto(fileImage);
+   }
+   const incoming={id:safe(p.id)||crypto.randomUUID(),name:safe(p.name),category:p.category,image,description:safe(p.description),price:Number(p.price),stock:Number(p.stock||0)};
+   const normalized=normalizeName(incoming.name);
+   let index=merged.findIndex(item=>item.id===incoming.id);
+   if(index<0)index=merged.findIndex(item=>normalizeName(item.name)===normalized);
+   if(index>=0){incoming.id=merged[index].id;merged[index]={...merged[index],...incoming};updated++}
+   else{merged.push(incoming);added++}
+  }
+  products=merged;
+  await saveRemote();
+  setStatus('Fusión completada: '+added+' artículos nuevos y '+updated+' actualizados. El catálogo oficial conserva los demás artículos.');
+ }catch(e){setStatus(e.message||'No se pudo importar.')}
+ event.target.value='';
+});
 async function getLegacyPhoto(id){
  if(!id)return null;
  return new Promise(resolve=>{try{const req=indexedDB.open(PHOTO_DB,1);req.onsuccess=()=>{const db=req.result;if(!db.objectStoreNames.contains(PHOTO_STORE)){db.close();resolve(null);return}const get=db.transaction(PHOTO_STORE).objectStore(PHOTO_STORE).get(id);get.onsuccess=()=>{const value=get.result||null;db.close();resolve(value)};get.onerror=()=>{db.close();resolve(null)}};req.onerror=()=>resolve(null)}catch{resolve(null)}});
