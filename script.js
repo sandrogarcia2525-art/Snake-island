@@ -86,24 +86,40 @@ document.querySelectorAll('.inquiry-button').forEach(button=>button.addEventList
   const message='Hola, quiero consultar precio, existencias y fotografías disponibles de '+product+' de Snake Island × Blue Worlds.';
   window.open('https://wa.me/'+orderPhone+'?text='+encodeURIComponent(message),'_blank','noopener');
 }));
-// Todos los artículos informativos también pueden agregarse a la bolsa.
-document.querySelectorAll('.product-card .inquiry-button').forEach(original=>{
- const card=original.closest('.product-card');if(!card)return;
- const add=document.createElement('button');add.type='button';add.className='add-button catalog-bag-add';add.textContent='AÑADIR A LA BOLSA +';
- original.insertAdjacentElement('beforebegin',add);
- add.addEventListener('click',()=>{
-  const name=card.querySelector('.product-info h3')?.textContent?.trim()||original.dataset.inquiry||'Artículo de catálogo';
+// Todos los artículos informativos pueden agregarse a la bolsa.
+// PEPE tiene dos variantes independientes: cada una conserva su propio precio e inventario.
+document.querySelectorAll('.product-card').forEach(card=>{
+ const inquiries=[...card.querySelectorAll('.inquiry-button')];
+ if(!inquiries.length)return;
+ const heading=card.querySelector('.product-info h3')?.textContent?.trim()||'Artículo de catálogo';
+ const isPepe=/^PEPE$/i.test(heading);
+ const variants=isPepe
+  ? [{name:'PEPE · OPCIÓN 1',price:1000,label:'AÑADIR OPCIÓN 1 · $1,000 MXN'},{name:'PEPE · OPCIÓN 2',price:650,label:'AÑADIR OPCIÓN 2 · $650 MXN'}]
+  : [{name:heading,price:null,label:'AÑADIR A LA BOLSA +'}];
+ if(isPepe){
+  const original=inquiries[0];
+  variants.forEach(variant=>{
+   const add=document.createElement('button');add.type='button';add.className='add-button catalog-bag-add';add.textContent=variant.label;
+   original.insertAdjacentElement('beforebegin',add);
+   add.addEventListener('click',()=>addStaticCatalogItem(variant, /NENA/i.test(heading)?3:1));
+  });
+ }else{
+  const original=inquiries[0];
   const raw=card.querySelector('.product-info strong')?.textContent||'';
   const match=raw.match(/\$\s*([\d,]+)\s*MXN/i);
-  const price=match?Number(match[1].replace(/,/g,'')):null;
-  const isNena=/NENA/i.test(name);const packageUnits=isNena?3:1;
-  const existing=cart.find(item=>item.staticCatalog&&item.name===name);
-  if(existing)existing.quantity++;
-  else cart.push({staticCatalog:true,name,price,quantity:1,minQuantity:1,packageUnits,stock:null});
-  renderCart();dialog?.showModal();
-  if(toast){toast.textContent='ARTÍCULO AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
- });
+  variants[0].price=match?Number(match[1].replace(/,/g,'')):null;
+  const add=document.createElement('button');add.type='button';add.className='add-button catalog-bag-add';add.textContent=variants[0].label;
+  original.insertAdjacentElement('beforebegin',add);
+  add.addEventListener('click',()=>addStaticCatalogItem(variants[0],/NENA/i.test(heading)?3:1));
+ }
 });
+function addStaticCatalogItem(variant,packageUnits=1){
+ const existing=cart.find(item=>item.staticCatalog&&item.name===variant.name);
+ if(existing)existing.quantity++;
+ else cart.push({staticCatalog:true,name:variant.name,price:variant.price,quantity:1,minQuantity:1,packageUnits,stock:null});
+ renderCart();dialog?.showModal();
+ if(toast){toast.textContent='ARTÍCULO AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
+}
 const year=document.querySelector('#year');if(year)year.textContent=new Date().getFullYear();
 renderCart();
 const cardPay=document.querySelector('#pay-card');
