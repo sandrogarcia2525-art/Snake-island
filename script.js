@@ -191,13 +191,13 @@ async function saveRemote(){
 function addUnifiedCartItem({productId=null,name,size='',sizes=[],price=null,stock=null,packageUnits=1}){
  const key=productId||'static:'+name;
  const existing=cart.find(item=>(item.productId||('static:'+item.name))===key&&item.size===size&&Number(item.packageUnits||1)===Number(packageUnits||1));
- const maxPackages=Number.isFinite(Number(stock))?Math.floor(Number(stock)/Math.max(1,Number(packageUnits)||1)):null;
+ const maxPackages=stock!==null&&stock!==undefined&&stock!==''&&Number.isFinite(Number(stock))?Math.floor(Number(stock)/Math.max(1,Number(packageUnits)||1)):null;
  if(maxPackages!==null&&maxPackages<=0){alert('No hay existencias suficientes para esta presentación. Consulta disponibilidad con el equipo.');return}
  if(existing){
   if(maxPackages!==null&&existing.quantity>=maxPackages){alert('No hay más existencias disponibles para sumar.');return}
   existing.quantity++;
  }else{
-  cart.push({productId,name,size,sizes:[...sizes],price:Number.isFinite(Number(price))?Number(price):null,quantity:1,stock:maxPackages,packageUnits:Math.max(1,Number(packageUnits)||1)});
+  cart.push({productId,name,size,sizes:[...sizes],price:price!==null&&price!==undefined&&price!==''&&Number.isFinite(Number(price))?Number(price):null,quantity:1,stock:maxPackages,packageUnits:Math.max(1,Number(packageUnits)||1)});
  }
  renderCart();dialog?.showModal();
  if(toast){toast.textContent='ARTÍCULO AÑADIDO A TU BOLSA';toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),1800)}
