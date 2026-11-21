@@ -17,7 +17,10 @@ const checkoutCatalog={
  'PLAYERAS 1 PIEZA':{price:950,units:1,category:'wear'},
  'PLAYERAS 3 PIEZAS':{price:2800,units:3,category:'wear'},
  'SUÉTERES 1 PIEZA':{price:950,units:1,category:'wear'},
- 'SUÉTERES 3 PIEZAS':{price:2800,units:3,category:'wear'}
+ 'SUÉTERES 3 PIEZAS':{price:2800,units:3,category:'wear'},
+ 'DOUNOTS 1 PIEZA':{price:850,units:1,category:'merch-green'},
+ 'DOUNOTS 5 PIEZAS':{price:2500,units:5,category:'merch-green'},
+ 'DOUNOTS 10 PIEZAS':{price:4500,units:10,category:'merch-green'}
 };
 const prices=Object.fromEntries(Object.entries(checkoutCatalog).map(([key,value])=>[key,value.price]));
 const orderPhone='524181516612';
