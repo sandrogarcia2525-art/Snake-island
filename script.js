@@ -108,7 +108,7 @@ document.querySelectorAll('.product-card').forEach(card=>{
  const variants=isPepe
   ? [{name:'PEPE · OPCIÓN 1 · 1 g',price:1000,label:'AÑADIR OPCIÓN 1 · 1 g · $1,000 MXN',units:1},{name:'PEPE · OPCIÓN 2 · 1/2 g',price:650,label:'AÑADIR OPCIÓN 2 · 1/2 g · $650 MXN',units:1}]
   : isDounots
-  ? [{name:'DOUNOTS · 1 PIEZA',price:850,label:'AÑADIR 1 PIEZA · $850 MXN',units:1},{name:'DOUNOTS · PAQUETE 10 PIEZAS',price:4500,label:'AÑADIR PAQUETE 10 PIEZAS · $4,500 MXN',units:10}]
+  ? [{name:'DOUNOTS · 1 PIEZA',price:850,label:'AÑADIR 1 PIEZA · $850 MXN',units:1},{name:'DOUNOTS · PAQUETE 5 PIEZAS',price:2500,label:'AÑADIR PAQUETE 5 PIEZAS · $2,500 MXN',units:5},{name:'DOUNOTS · PAQUETE 10 PIEZAS',price:4500,label:'AÑADIR PAQUETE 10 PIEZAS · $4,500 MXN',units:10}]
   : /^NENA/i.test(heading)
   ? [{name:'NENA · PAQUETE 3 PIEZAS',price:250,label:'AÑADIR PAQUETE 3 PIEZAS · $250 MXN',units:3}]
   : /^PLUMA/i.test(heading)
@@ -230,7 +230,7 @@ function renderPublicCards(){
   const cleanName=String(product.name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   let variants=[{name:product.name,price:Number(product.price),units:1,label:'AÑADIR 1 PIEZA'}];
   if(/^pepe$/.test(cleanName))variants=[{name:'PEPE · OPCIÓN 1 · 1 g',price:1000,units:1,label:'OPCIÓN 1 · 1 g · $1,000 MXN'},{name:'PEPE · OPCIÓN 2 · 1/2 g',price:650,units:1,label:'OPCIÓN 2 · 1/2 g · $650 MXN'}];
-  else if(/^dounots/.test(cleanName))variants=[{name:'DOUNOTS · 1 PIEZA',price:850,units:1,label:'1 PIEZA · $850 MXN'},{name:'DOUNOTS · PAQUETE 10 PIEZAS',price:4500,units:10,label:'PAQUETE 10 PIEZAS · $4,500 MXN'}];
+  else if(/^dounots/.test(cleanName))variants=[{name:'DOUNOTS · 1 PIEZA',price:850,units:1,label:'1 PIEZA · $850 MXN'},{name:'DOUNOTS · PAQUETE 5 PIEZAS',price:2500,units:5,label:'PAQUETE 5 PIEZAS · $2,500 MXN'},{name:'DOUNOTS · PAQUETE 10 PIEZAS',price:4500,units:10,label:'PAQUETE 10 PIEZAS · $4,500 MXN'}];
   else if(/^nena/.test(cleanName))variants=[{name:'NENA · PAQUETE 3 PIEZAS',price:250,units:3,label:'PAQUETE 3 PIEZAS · $250 MXN'}];
   else if(/^plumas?$/.test(cleanName))variants=[{name:'PLUMA · 1 PIEZA',price:650,units:1,label:'1 PIEZA · $650 MXN'}];
   else if(/^dona/.test(cleanName))variants=[{name:'DONA · PAQUETE 50 PIEZAS',price:15000,units:50,label:'PAQUETE 50 PIEZAS · $15,000 MXN'}];
