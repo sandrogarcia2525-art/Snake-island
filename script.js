@@ -131,26 +131,25 @@ const PHOTO_STORE='photos';
 const labels={wear:'ROPA',accessories:'ACCESORIOS',collectibles:'COLECCIONABLES'};
 const form=document.querySelector('#product-form');
 if(!form)return;
+const panel=document.querySelector('#admin-catalogo');
 const list=document.querySelector('#admin-product-list');
 const statusLine=document.querySelector('#admin-status');
 const grid=document.querySelector('.product-grid');
 const photoInput=document.querySelector('#product-photo');
 const photoPreview=document.querySelector('#photo-preview');
-let selectedPhoto=null,products=[];
+const syncButton=document.querySelector('#sync-catalog');
+let selectedPhoto=null,products=[],adminPassword=null;
 try{products=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch{}
 if(!Array.isArray(products))products=[];
 const save=()=>localStorage.setItem(STORAGE_KEY,JSON.stringify(products));
-// Importación inicial del catálogo recibido (solo artículos claramente identificados como stickers y dulces).
 if(!products.length){
  products=[
   {id:'import-planas-20261114',name:'Planas',category:'collectibles',image:'',description:'Láminas de stickers. 25 piezas por $2,000 MXN con envío incluido.',price:250,stock:1000,photoId:''},
   {id:'import-nenas-20261114',name:'Nenas',category:'accessories',image:'',description:'Dulces surtidos. 5 piezas por $300 MXN; 10 piezas por $550 MXN.',price:150,stock:1000,photoId:''}
  ];
 }
-// Existencias confirmadas por el usuario: 1,000 unidades de cada artículo importado.
 for(const p of products){if(p.id==='import-planas-20261114'||p.id==='import-nenas-20261114')p.stock=1000;}
 save();
-
 const safe=value=>String(value??'').trim();
 function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(PHOTO_DB,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(PHOTO_STORE))req.result.createObjectStore(PHOTO_STORE)};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 async function savePhoto(id,blob){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(PHOTO_STORE,'readwrite');tx.objectStore(PHOTO_STORE).put(blob,id);tx.oncomplete=()=>{db.close();resolve(id)};tx.onerror=()=>{db.close();reject(tx.error)}})}
@@ -159,7 +158,47 @@ async function deletePhoto(id){if(!id)return;const db=await openDB();return new 
 async function photoData(id){const blob=await getPhoto(id);if(!blob)return'';return new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>resolve('');reader.readAsDataURL(blob)})}
 function reset(){form.reset();document.querySelector('#edit-id').value='';document.querySelector('#save-product').textContent='GUARDAR ARTÍCULO ↗';selectedPhoto=null;photoPreview.hidden=true;photoPreview.removeAttribute('src')}
 photoInput?.addEventListener('change',()=>{selectedPhoto=photoInput.files?.[0]||null;if(selectedPhoto){if(!selectedPhoto.type.startsWith('image/')){selectedPhoto=null;photoInput.value='';statusLine.textContent='Selecciona un archivo de imagen.';return}photoPreview.src=URL.createObjectURL(selectedPhoto);photoPreview.hidden=false}else{photoPreview.hidden=true;photoPreview.removeAttribute('src')}});
-function addProductToBag(product,button){
+async function apiPost(payload){
+ const response=await fetch('/api/catalog',{method:'POST',headers:{'Content-Type':'application/json','x-admin-password':adminPassword||''},body:JSON.stringify(payload)});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(data.error||'No se pudo sincronizar el catálogo.');
+ return data;
+}
+async function verifyAdmin(password){
+ adminPassword=password;
+ try{await apiPost({action:'verify'});return true}catch(error){adminPassword=null;throw error}
+}
+document.querySelector('#admin-open')?.addEventListener('click',async()=>{
+ if(!adminPassword){const entered=window.prompt('Contraseña de administración');if(!entered)return;try{await verifyAdmin(entered)}catch(error){alert(error.message);return}}
+ panel.hidden=false;panel.scrollIntoView({behavior:'smooth',block:'start'});
+});
+async function syncSharedCatalog(){
+ if(!adminPassword){const entered=window.prompt('Contraseña de administración para sincronizar');if(!entered)return false;await verifyAdmin(entered)}
+ const payload=[];
+ for(const product of products){payload.push({...product,photoData:product.photoId?await photoData(product.photoId):''})}
+ const result=await apiPost({products:payload});
+ products=Array.isArray(result.products)?result.products:products;
+ save();render();
+ statusLine.textContent='Sincronización completada. Catálogo compartido actualizado para la tienda y los demás dispositivos.';
+ return true;
+}
+async function loadSharedCatalog(){
+ try{
+  const response=await fetch('/api/catalog',{cache:'no-store'});
+  if(!response.ok)throw new Error('No se pudo consultar el catálogo compartido.');
+  const data=await response.json();
+  const remote=Array.isArray(data.products)?data.products:[];
+  const merged=new Map(products.map(p=>[p.id,p]));
+  for(const p of remote){
+   const local=merged.get(p.id);
+   if(!local||Number(p.updatedAt||0)>=Number(local.updatedAt||0))merged.set(p.id,p);
+  }
+  products=[...merged.values()];
+  save();render();
+  statusLine.textContent=remote.length?'Catálogo compartido cargado. '+remote.length+' artículos sincronizados.':'Catálogo compartido listo. Pulsa “Sincronizar con la tienda” para publicar el inventario de este dispositivo.';
+ }catch(error){statusLine.textContent='No se pudo leer el catálogo compartido. El panel conserva los datos locales: '+error.message}
+}
+function addProductToBag(product){
  const alreadyInBag=cart.filter(item=>item.managedId===product.id).reduce((sum,item)=>sum+(Number(item.quantity)||1),0);
  const stock=Math.max(0,Number(product.stock)||0);
  if(alreadyInBag>=stock){alert(stock===0?'Este artículo no tiene existencias registradas.':'Ya agregaste todas las existencias disponibles de este artículo.');return}
@@ -175,64 +214,68 @@ function render(){
  products.forEach(product=>{
   const row=document.createElement('article');row.className='admin-product-row';
   const info=document.createElement('div'),name=document.createElement('strong'),detail=document.createElement('span');
-  name.textContent=product.name;detail.textContent=(labels[product.category]||'ARTÍCULO')+' · $'+Number(product.price).toLocaleString('es-MX')+' MXN · EXISTENCIAS LOCALES: '+Number(product.stock||0);
+  name.textContent=product.name;detail.textContent=(labels[product.category]||'ARTÍCULO')+' · $'+Number(product.price).toLocaleString('es-MX')+' MXN · EXISTENCIAS: '+Number(product.stock||0);
   info.append(name,detail);
   const actions=document.createElement('div');actions.className='admin-row-actions';
   const edit=document.createElement('button');edit.type='button';edit.textContent='EDITAR';
   edit.addEventListener('click',async()=>{
-   document.querySelector('#edit-id').value=product.id;
-   document.querySelector('#product-name').value=product.name;
-   document.querySelector('#product-category').value=product.category;
-   document.querySelector('#product-image').value=product.image||'';
-   document.querySelector('#product-description').value=product.description||'';
-   document.querySelector('#product-price').value=product.price;
-   document.querySelector('#product-stock').value=product.stock||0;
+   document.querySelector('#edit-id').value=product.id;document.querySelector('#product-name').value=product.name;document.querySelector('#product-category').value=product.category;document.querySelector('#product-image').value=product.image||'';document.querySelector('#product-description').value=product.description||'';document.querySelector('#product-price').value=product.price;document.querySelector('#product-stock').value=product.stock||0;
    selectedPhoto=null;photoInput.value='';photoPreview.hidden=true;photoPreview.removeAttribute('src');
-   if(product.photoId){const blob=await getPhoto(product.photoId);if(blob){photoPreview.src=URL.createObjectURL(blob);photoPreview.hidden=false}}
+   if(product.photoId){const blob=await getPhoto(product.photoId);if(blob){photoPreview.src=URL.createObjectURL(blob);photoPreview.hidden=false}}else if(product.image){photoPreview.src=product.image;photoPreview.hidden=false}
    document.querySelector('#save-product').textContent='ACTUALIZAR ARTÍCULO ↗';form.scrollIntoView({behavior:'smooth',block:'start'});
   });
   const remove=document.createElement('button');remove.type='button';remove.textContent='ELIMINAR';
-  remove.addEventListener('click',async()=>{if(!confirm('¿Eliminar '+product.name+' de este catálogo local?'))return;products=products.filter(item=>item.id!==product.id);await deletePhoto(product.photoId);save();render();statusLine.textContent='Artículo eliminado de este navegador.'});
+  remove.addEventListener('click',async()=>{if(!confirm('¿Eliminar '+product.name+' del catálogo compartido?'))return;products=products.filter(item=>item.id!==product.id);save();render();try{await syncSharedCatalog()}catch(error){statusLine.textContent='Eliminado localmente, pero falta sincronizar: '+error.message}});
   actions.append(edit,remove);row.append(info,actions);list.append(row);
   const card=document.createElement('article');card.className='product-card managed-product';card.dataset.category=product.category;card.dataset.managed='true';card.dataset.productId=product.id;
   const visual=document.createElement('div');visual.className='product-art art-managed';
-  const img=document.createElement('img');img.alt=product.name;img.loading='lazy';
-  if(product.image)img.src=product.image;else if(product.photoId)getPhoto(product.photoId).then(blob=>{if(blob)img.src=URL.createObjectURL(blob)});
-  visual.append(img);
-  if(!product.image&&!product.photoId){const fallback=document.createElement('div');fallback.className='catalog-placeholder';fallback.textContent=product.name;visual.append(fallback)}
+  if(product.image){const img=document.createElement('img');img.alt=product.name;img.loading='lazy';img.src=product.image;visual.append(img)}
+  else if(product.photoId){getPhoto(product.photoId).then(blob=>{if(blob){const img=document.createElement('img');img.alt=product.name;img.src=URL.createObjectURL(blob);visual.append(img)}})}
+  else{const fallback=document.createElement('div');fallback.className='catalog-placeholder';fallback.textContent=product.name;visual.append(fallback)}
   const data=document.createElement('div');data.className='product-info';
   const wrap=document.createElement('div'),small=document.createElement('small'),title=document.createElement('h3'),price=document.createElement('strong');
-  small.textContent='BLUE WORLDS / NUEVO';title.textContent=product.name;price.textContent='$'+Number(product.price).toLocaleString('es-MX')+' MXN';
-  wrap.append(small,title,price);data.append(wrap);
+  small.textContent='SNAKE ISLAND / CATÁLOGO';title.textContent=product.name;price.textContent='$'+Number(product.price).toLocaleString('es-MX')+' MXN';wrap.append(small,title,price);data.append(wrap);
   if(product.description){const desc=document.createElement('p');desc.className='managed-description';desc.textContent=product.description;data.append(desc)}
-  const add=document.createElement('button');add.className='add-button';add.type='button';add.textContent='AÑADIR A LA BOLSA +';
-  add.addEventListener('click',()=>addProductToBag(product,add));
+  const add=document.createElement('button');add.className='add-button';add.type='button';add.textContent='AÑADIR A LA BOLSA +';add.addEventListener('click',()=>addProductToBag(product));
   card.append(visual,data,add);grid?.append(card);
  });
  syncManagedStock();
 }
 syncManagedStock=()=>{
  grid?.querySelectorAll('[data-managed="true"]').forEach(card=>{
-  const product=products.find(item=>item.id===card.dataset.productId);
-  if(!product)return;
+  const product=products.find(item=>item.id===card.dataset.productId);if(!product)return;
   const inBag=cart.filter(item=>item.managedId===product.id).reduce((sum,item)=>sum+(Number(item.quantity)||1),0);
-  const remaining=Math.max(0,(Number(product.stock)||0)-inBag);
-  const button=card.querySelector('.add-button');
-  if(button){button.disabled=remaining===0;button.textContent=remaining===0?'SIN EXISTENCIAS':'AÑADIR A LA BOLSA +';}
+  const remaining=Math.max(0,(Number(product.stock)||0)-inBag);const button=card.querySelector('.add-button');
+  if(button){button.disabled=remaining===0;button.textContent=remaining===0?'SIN EXISTENCIAS':'AÑADIR A LA BOLSA +'}
  });
 };
-
 form.addEventListener('submit',async event=>{
  event.preventDefault();const editId=document.querySelector('#edit-id').value,previous=products.find(item=>item.id===editId);
  const category=document.querySelector('#product-category').value,price=Number(document.querySelector('#product-price').value),stock=Number(document.querySelector('#product-stock').value);
- const product={id:editId||(crypto.randomUUID?crypto.randomUUID():String(Date.now())),name:safe(document.querySelector('#product-name').value),category,image:safe(document.querySelector('#product-image').value),description:safe(document.querySelector('#product-description').value),price,stock,photoId:previous?.photoId||''};
+ const product={id:editId||(crypto.randomUUID?crypto.randomUUID():String(Date.now())),name:safe(document.querySelector('#product-name').value),category,image:safe(document.querySelector('#product-image').value),description:safe(document.querySelector('#product-description').value),price,stock,photoId:previous?.photoId||'',updatedAt:Date.now()};
  if(!product.name||!Object.hasOwn(labels,category)||!Number.isFinite(price)||price<0||!Number.isInteger(stock)||stock<0)return;
- try{if(selectedPhoto){const key='photo-'+product.id;await savePhoto(key,selectedPhoto);if(previous?.photoId&&previous.photoId!==key)await deletePhoto(previous.photoId);product.photoId=key;product.image=''}
- const index=products.findIndex(item=>item.id===product.id);if(index>=0)products[index]=product;else products.push(product);save();render();reset();statusLine.textContent='Guardado en este teléfono. No modifica la tienda pública ni el inventario de otros dispositivos.'}
- catch{statusLine.textContent='No se pudo guardar la fotografía. Intenta otra vez.'}
+ try{
+  if(selectedPhoto){const key='photo-'+product.id;await savePhoto(key,selectedPhoto);product.photoId=key;product.image=''}
+  const index=products.findIndex(item=>item.id===product.id);if(index>=0)products[index]=product;else products.push(product);
+  save();render();reset();
+  try{await syncSharedCatalog()}catch(error){statusLine.textContent='Guardado en este teléfono; no se pudo sincronizar: '+error.message}
+ }catch{statusLine.textContent='No se pudo guardar la fotografía. Intenta otra vez.'}
 });
 document.querySelector('#cancel-edit')?.addEventListener('click',reset);
-document.querySelector('#export-products')?.addEventListener('click',async()=>{try{const portable=[];for(const p of products)portable.push({...p,photoData:await photoData(p.photoId)});const blob=new Blob([JSON.stringify(portable,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='snake-island-catalogo-local.json';a.click();URL.revokeObjectURL(url);statusLine.textContent='Respaldo descargado con fotografías, precios y existencias locales.'}catch{statusLine.textContent='No se pudo crear el respaldo.'}});
-document.querySelector('#import-products')?.addEventListener('change',async event=>{const file=event.target.files?.[0];if(!file)return;try{const imported=JSON.parse(await file.text());if(!Array.isArray(imported)||imported.some(p=>!p.name||!Object.hasOwn(labels,p.category)||!Number.isFinite(Number(p.price))))throw new Error('Formato');const restored=[];for(const p of imported){const id=safe(p.id)||String(Date.now()+Math.random());let photoId='';if(p.photoData&&String(p.photoData).startsWith('data:image/')){const response=await fetch(p.photoData);photoId='photo-'+id;await savePhoto(photoId,await response.blob())}else if(p.photoId)photoId=p.photoId;restored.push({id,name:safe(p.name),category:p.category,image:safe(p.image),photoId,description:safe(p.description),price:Number(p.price),stock:Number(p.stock||0)})}products=restored;save();render();statusLine.textContent='Catálogo local importado.'}catch{statusLine.textContent='No se pudo importar. Usa un JSON exportado desde este panel.'}event.target.value=''});
+syncButton?.addEventListener('click',async()=>{try{await syncSharedCatalog()}catch(error){statusLine.textContent=error.message}});
+document.querySelector('#export-products')?.addEventListener('click',async()=>{
+ try{const portable=[];for(const p of products)portable.push({...p,photoData:p.photoId?await photoData(p.photoId):''});const blob=new Blob([JSON.stringify(portable,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='snake-island-catalogo-compartido.json';a.click();URL.revokeObjectURL(url);statusLine.textContent='Respaldo JSON descargado con precios, existencias y fotografías disponibles.'}catch{statusLine.textContent='No se pudo crear el respaldo.'}
+});
+document.querySelector('#import-products')?.addEventListener('change',async event=>{
+ const file=event.target.files?.[0];if(!file)return;
+ try{
+  const imported=JSON.parse(await file.text());if(!Array.isArray(imported)||imported.some(p=>!p.name||!Object.hasOwn(labels,p.category)||!Number.isFinite(Number(p.price))))throw new Error('Formato');
+  const restored=[];
+  for(const p of imported){const id=safe(p.id)||String(Date.now()+Math.random());let photoId='',image=safe(p.image);if(p.photoData&&String(p.photoData).startsWith('data:image/')){const response=await fetch(p.photoData);photoId='photo-'+id;await savePhoto(photoId,await response.blob());image=''}restored.push({id,name:safe(p.name),category:p.category,image,photoId,description:safe(p.description),price:Number(p.price),stock:Number(p.stock||0),updatedAt:Date.now()})}
+  products=restored;save();render();try{await syncSharedCatalog()}catch(error){statusLine.textContent='Importado localmente; falta sincronizar: '+error.message}
+ }catch{statusLine.textContent='No se pudo importar. Usa un JSON exportado desde este panel.'}
+ event.target.value='';
+});
 render();
+loadSharedCatalog();
 })();
