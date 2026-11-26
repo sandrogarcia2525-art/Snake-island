@@ -131,6 +131,7 @@ document.querySelectorAll('.product-card').forEach(card=>{
  });function addStaticCatalogItem(variant,packageUnits=1){
  addUnifiedCartItem({name:variant.name,price:variant.price,stock:null,packageUnits});
 }
+});
 const year=document.querySelector('#year');if(year)year.textContent=new Date().getFullYear();
 renderCart();
 const cardPay=document.querySelector('#pay-card');
@@ -200,7 +201,7 @@ async function saveRemote(){
  const r=await fetch('/api/admin-catalog',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({products})});
  const d=await r.json();
  if(!r.ok)throw new Error(d.error||'No se pudo guardar el catálogo.');
- renderPublicCards();
+ render();
 }
 
 function addProductToBag(product){
@@ -249,8 +250,20 @@ function renderPublicCards(){
   card.append(stock);grid?.append(card);
  });
 }
+function updateInventoryTargets(){
+ document.querySelectorAll('.inventory-panel select[name="target"]').forEach(select=>{
+  const selected=select.value;
+  const options=[...select.querySelectorAll('option')].slice(0,2);
+  select.replaceChildren(...options);
+  products.forEach(product=>{
+   const option=document.createElement('option');option.value=product.id;option.textContent=product.name+' · '+Number(product.stock||0)+' disponibles';select.append(option);
+  });
+  if([...select.options].some(option=>option.value===selected))select.value=selected;
+ });
+}
 function render(){
  list.replaceChildren();
+ updateInventoryTargets();
  products.forEach(product=>{
   const row=document.createElement('article');row.className='admin-product-row';
   const info=document.createElement('div'),name=document.createElement('strong'),detail=document.createElement('span');
@@ -322,6 +335,36 @@ form.addEventListener('submit',async event=>{
  finally{document.querySelector('#save-product').disabled=false}
 });
 document.querySelector('#cancel-edit')?.addEventListener('click',reset);
+document.querySelectorAll('[data-inventory-adjust]').forEach(panel=>panel.addEventListener('submit',async event=>{
+ event.preventDefault();
+ const target=panel.querySelector('[name="target"]')?.value;
+ const amount=Number(panel.querySelector('[name="amount"]')?.value);
+ const direction=panel.dataset.inventoryAdjust;
+ if(!target){setStatus('Selecciona un artículo o todo el catálogo para continuar.');return}
+ if(!Number.isSafeInteger(amount)||amount<1){setStatus('Ingresa una cantidad entera mayor que cero.');return}
+ const affected=target==='all'?products:products.filter(product=>product.id===target);
+ if(!affected.length){setStatus('No hay artículos disponibles para actualizar.');return}
+ if(direction==='subtract'&&affected.some(product=>Number(product.stock||0)<amount)){
+  setStatus('No se aplicaron cambios: al menos un artículo no tiene suficientes existencias para restar '+amount+'.');return;
+ }
+ if(direction==='add'&&affected.some(product=>Number(product.stock||0)+amount>Number.MAX_SAFE_INTEGER)){
+  setStatus('La cantidad supera el límite permitido para el inventario.');return;
+ }
+ const previous=products.map(product=>({id:product.id,stock:product.stock}));
+	 document.querySelectorAll('[data-inventory-adjust] button[type="submit"]').forEach(button=>button.disabled=true);
+ try{
+  const affectedIds=new Set(affected.map(product=>product.id));
+  products=products.map(product=>affectedIds.has(product.id)?{...product,stock:Number(product.stock||0)+(direction==='add'?amount:-amount)}:product);
+  await saveRemote();
+  panel.reset();
+  const scope=target==='all'?'los '+affected.length+' artículos del catálogo':affected[0].name;
+  setStatus('Inventario actualizado: '+amount.toLocaleString('es-MX')+' unidades '+(direction==='add'?'sumadas a ':'restadas de ')+scope+'.');
+ }catch(error){
+  products=products.map(product=>{const old=previous.find(item=>item.id===product.id);return old?{...product,stock:old.stock}:product});
+  render();
+  setStatus(error.message||'No se pudo guardar el ajuste de inventario.');
+ }finally{document.querySelectorAll('[data-inventory-adjust] button[type="submit"]').forEach(button=>button.disabled=false)}
+}));
 document.querySelector('#set-all-stock')?.addEventListener('click',async()=>{
  if(!products.length){setStatus('No hay artículos en el catálogo compartido para actualizar.');return}
  if(!confirm('Esto establecerá exactamente 1,000 existencias para CADA artículo del catálogo actual. Los valores de stock anteriores serán reemplazados. ¿Deseas continuar?'))return;
